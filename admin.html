@@ -26,32 +26,71 @@
         </div>
 
         <div id="data-entry-section" class="admin-section" style="display:none;">
-            <h2>Add New Result</h2>
-            <form id="result-form">
-                <label for="date-input">Date:</label>
-                <input type="date" id="date-input" required>
-                <label for="baji-input">Baji:</label>
-                <select id="baji-input" required>
-                    <option value="">Select Baji</option>
-                    <option value="1">1st Baji</option>
-                    <option value="2">2nd Baji</option>
-                    <option value="3">3rd Baji</option>
-                    <option value="4">4th Baji</option>
-                    <option value="5">5th Baji</option>
-                    <option value="6">6th Baji</option>
-                    <option value="7">7th Baji</option>
-                    <option value="8">8th Baji</option>
-                </select>
-                <label for="patti-input">Patti Number:</label>
-                <input type="text" id="patti-input" placeholder="e.g., 123" required>
-                <label for="single-input">Single Number:</label>
-                <input type="number" id="single-input" placeholder="e.g., 6" required>
-                <button type="submit">Save Result</button>
-            </form>
-            <p id="result-message" class="success-message"></p>
             <div class="logout-container">
                  <button id="logout-btn">Logout</button>
             </div>
+            
+            <section class="admin-tab-container">
+                <div class="tab-header">
+                    <button class="tab-button active" data-tab="result-tab">Add Result</button>
+                    <button class="tab-button" data-tab="dealer-tab">Manage Dealers</button>
+                    <button class="tab-button" data-tab="graph-tab">View Graphs</button>
+                </div>
+
+                <div id="result-tab" class="tab-content active">
+                    <h2>Add New Result</h2>
+                    <form id="result-form">
+                        <label for="date-input">Date:</label>
+                        <input type="date" id="date-input" required>
+                        <label for="baji-input">Baji:</label>
+                        <select id="baji-input" required>
+                            <option value="">Select Baji</option>
+                            <option value="1">1st Baji</option>
+                            <option value="2">2nd Baji</option>
+                            <option value="3">3rd Baji</option>
+                            <option value="4">4th Baji</option>
+                            <option value="5">5th Baji</option>
+                            <option value="6">6th Baji</option>
+                            <option value="7">7th Baji</option>
+                            <option value="8">8th Baji</option>
+                        </select>
+                        <label for="patti-input">Patti Number:</label>
+                        <input type="text" id="patti-input" placeholder="e.g., 123" required>
+                        <label for="single-input">Single Number:</label>
+                        <input type="number" id="single-input" placeholder="e.g., 6" required>
+                        <button type="submit">Save Result</button>
+                    </form>
+                    <p id="result-message" class="success-message"></p>
+                </div>
+
+                <div id="dealer-tab" class="tab-content">
+                    <h2>Manage Dealers & Tokens</h2>
+                    <h3>Add New Dealer</h3>
+                    <form id="dealer-form">
+                        <label for="dealer-name">Name:</label>
+                        <input type="text" id="dealer-name" placeholder="Dealer's Name" required>
+                        <label for="dealer-phone">Phone:</label>
+                        <input type="text" id="dealer-phone" placeholder="Phone Number" required>
+                        <button type="submit">Add Dealer</button>
+                    </form>
+                    <p id="dealer-message" class="success-message"></p>
+                    
+                    <h3>Transfer Tokens</h3>
+                    <form id="token-transfer-form">
+                        <label for="dealer-select">Select Dealer:</label>
+                        <select id="dealer-select" required></select>
+                        <label for="token-amount">Amount:</label>
+                        <input type="number" id="token-amount" placeholder="Tokens to Transfer" required>
+                        <button type="submit">Transfer</button>
+                    </form>
+                    <p id="token-message" class="success-message"></p>
+                </div>
+
+                <div id="graph-tab" class="tab-content">
+                    <h2>Result Graphs (Coming Soon)</h2>
+                    <p>এই ফিচারটি পরবর্তীতে যোগ করা হবে।</p>
+                </div>
+            </section>
         </div>
 
     </main>
