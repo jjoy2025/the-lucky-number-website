@@ -53,32 +53,25 @@ h1, h2 {
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 
-.live-animation {
-    width: 50px;
-    height: 50px;
-    background-color: #e74c3c;
-    border-radius: 50%;
-    margin: 10px auto;
-    animation: pulse 1.5s infinite;
+.date-header {
+    background-color: #f39c12;
+    color: #2c3e50;
+    text-align: center;
+    font-weight: bold;
+    padding: 10px;
+    font-size: 18px;
+    margin-bottom: 20px;
 }
 
-@keyframes pulse {
-    0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(231, 76, 60, 0.7); }
-    70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(231, 76, 60, 0); }
-    100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(231, 76, 60, 0); }
-}
-
-.result-box-container {
+.results-grid {
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    gap: 10px;
     overflow-x: auto;
-    white-space: nowrap;
     -webkit-overflow-scrolling: touch;
 }
 
-.result-box {
-    display: inline-block;
-    vertical-align: top;
-    width: 120px; /* Adjust based on your preference */
-    margin: 5px;
+.result-box-item {
     background-color: #2c3e50;
     border: 2px solid #f39c12;
     border-radius: 5px;
@@ -86,19 +79,17 @@ h1, h2 {
     text-align: center;
 }
 
-.result-box .patti-number, .result-box .single-number {
-    display: block;
-    margin: 5px 0;
-}
-
-.result-box .patti-number {
-    font-size: 18px;
+.result-box-item .patti {
+    font-size: 16px;
     font-weight: bold;
+    color: #ecf0f1;
+    margin-bottom: 5px;
 }
 
-.result-box .single-number {
+.result-box-item .single {
     font-size: 24px;
     font-weight: bold;
+    color: #ecf0f1;
 }
 
 /* Old Results Section */
@@ -125,27 +116,10 @@ h1, h2 {
 }
 
 .old-results-day .results-grid {
-    display: flex;
-    flex-wrap: nowrap;
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    gap: 10px;
     overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-}
-
-.old-results-day .result-box {
-    flex: 0 0 auto;
-}
-
-#show-more-btn {
-    display: block;
-    width: 100%;
-    padding: 10px;
-    margin-top: 20px;
-    background-color: #e74c3c;
-    color: white;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    font-size: 16px;
 }
 
 /* Time Schedule Section */
