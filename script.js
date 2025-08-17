@@ -3,8 +3,7 @@ const SUPABASE_URL = "https://urjcuxavrkyqttwtqvjx.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVyamN1eGF2cmt5cXR0d3Rxdmp4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU0MDI5NDIsImV4cCI6MjA3MDk3ODk0Mn0._HzIlEtRtwnsssFGonEqrHcqBm9WtXAx7bWa6S-9ErQ";
 
 // Supabase এবং Chart.js লাইব্রেরি সরাসরি লোড করা হচ্ছে
-const { createClient } = window.Supabase;
-const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 document.addEventListener('DOMContentLoaded', () => {
     // Admin প্যানেল বা পাবলিক সাইট যাচাই করা
