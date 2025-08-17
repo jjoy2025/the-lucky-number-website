@@ -61,8 +61,8 @@ h1, h2 {
     padding: 10px;
     font-size: 18px;
     margin-bottom: 20px;
-    position: relative; /* অ্যানিমেশনের জন্য */
-    overflow: hidden; /* অ্যানিমেশন ক্লিপ করার জন্য */
+    position: relative;
+    overflow: hidden;
 }
 
 .date-header.live-animation::before {
@@ -164,4 +164,129 @@ h1, h2 {
 
 .time-schedule tr:nth-child(even) {
     background-color: #34495e;
+}
+
+/* admin.css */
+body {
+    background-color: #2c3e50;
+    color: #ecf0f1;
+}
+
+.header h1 {
+    text-align: center;
+}
+
+.container {
+    max-width: 600px;
+    margin-top: 20px;
+}
+
+.admin-section {
+    background-color: #34495e;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    margin-bottom: 20px;
+}
+
+.admin-section h2, .admin-section h3 {
+    text-align: center;
+    color: #f39c12;
+}
+
+.admin-section form {
+    display: flex;
+    flex-direction: column;
+}
+
+.admin-section input, .admin-section select, .admin-section button {
+    margin-bottom: 10px;
+    padding: 10px;
+    border-radius: 5px;
+    border: none;
+}
+
+.admin-section button {
+    background-color: #f39c12;
+    color: #2c3e50;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.admin-section button:hover {
+    background-color: #e67e22;
+}
+
+.error-message {
+    color: #e74c3c;
+    text-align: center;
+}
+
+.success-message {
+    color: #2ecc71;
+    text-align: center;
+}
+
+.logout-container {
+    text-align: right;
+}
+
+.logout-container button {
+    background-color: #e74c3c;
+    color: #fff;
+}
+
+.tab-header {
+    display: flex;
+    justify-content: space-around;
+    margin-bottom: 20px;
+}
+
+.tab-button {
+    background-color: #555;
+    color: #fff;
+    border: none;
+    padding: 10px;
+    cursor: pointer;
+    flex-grow: 1;
+    border-radius: 5px 5px 0 0;
+}
+
+.tab-button.active {
+    background-color: #f39c12;
+    color: #2c3e50;
+}
+
+.tab-content {
+    display: none;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+/* রিপোর্ট টেবিলের স্টাইল */
+#reportContainer table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+}
+
+#reportContainer th, #reportContainer td {
+    border: 1px solid #4a6c8b;
+    padding: 10px;
+    text-align: center;
+}
+
+#reportContainer th {
+    background-color: #f39c12;
+    color: #2c3e50;
+}
+
+#reportContainer tr:nth-child(even) {
+    background-color: #34495e;
+}
+
+#graphContainer {
+    text-align: center;
 }
