@@ -1,23 +1,22 @@
 // আপনার Supabase URL এবং anon (public) Key এখানে বসান।
 const SUPABASE_URL = "https://urjcuxavrkyqttwtqvjx.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVyamN1eGF2cmt5cXR0d3Rxdmp4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU0MDI5NDIsImV4cCI6MjA3MDk3ODk0Mn0._HzIlEtRtwnsssFGonEqrHcqBm9WtXAx7bWa6S-9ErQ";
-// Supabase ক্লায়েন্ট তৈরি করা
-import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
-import 'https://cdn.jsdelivr.net/npm/chart.js'; // Chart.js লাইব্রেরি লোড করা
 
+// Supabase এবং Chart.js লাইব্রেরি সরাসরি লোড করা হচ্ছে
+const { createClient } = window.Supabase;
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
-// বর্তমান পেজ অনুযায়ী ফাংশন কল করা
-if (document.querySelector('#login-section')) {
-    setupAdminPanel();
-} else {
-    document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', () => {
+    // Admin প্যানেল বা পাবলিক সাইট যাচাই করা
+    if (document.querySelector('#login-section')) {
+        setupAdminPanel();
+    } else {
         fetchTodayResults();
         fetchOldResults();
         setupLoginButton();
         startLiveAnimation();
-    });
-}
+    }
+});
 
 function setupAdminPanel() {
     const loginForm = document.getElementById('login-form');
@@ -380,4 +379,104 @@ function setupAdminPanel() {
         const { error } = await supabase.auth.signOut();
         window.location.reload();
     });
+
+    // এই ফাংশনগুলো আগের কোড থেকে নেওয়া হয়েছে
+    async function fetchTodayResults() {
+        const today = new Date().toISOString().split('T')[0];
+        const { data: results, error } = await supabase
+            .from('results')
+            .select('*')
+            .eq('date', today)
+            .order('slot_id', { ascending: true });
+
+        if (error) {
+            console.error('Error fetching today\'s results:', error.message);
+            return;
+        }
+
+        const resultsGrid = document.querySelector('.today-result .results-grid');
+        resultsGrid.innerHTML = ''; // Clear previous results
+
+        const slotMap = new Map();
+        results.forEach(result => {
+            slotMap.set(result.slot_id, result);
+        });
+
+        for (let i = 1; i <= 8; i++) {
+            const result = slotMap.get(i);
+            const patti = result ? result.patti_number : '- - -';
+            const single = result ? result.single_number : '-';
+
+            const resultBox = document.createElement('div');
+            resultBox.className = 'result-box-item';
+            resultBox.innerHTML = `
+                <div class="patti">${patti}</div>
+                <div class="single">${single}</div>
+            `;
+            resultsGrid.appendChild(resultBox);
+        }
+        document.getElementById('current-date').textContent = new Date().toLocaleDateString('bn-IN');
+    }
+
+    async function fetchOldResults() {
+        const { data: results, error } = await supabase
+            .from('results')
+            .select('*')
+            .order('date', { ascending: false })
+            .limit(100);
+
+        if (error) {
+            console.error('Error fetching old results:', error.message);
+            return;
+        }
+
+        const groupedResults = results.reduce((acc, result) => {
+            const date = result.date;
+            if (!acc[date]) {
+                acc[date] = [];
+            }
+            acc[date].push(result);
+            return acc;
+        }, {});
+
+        const oldResultsContainer = document.querySelector('.old-results-container');
+        oldResultsContainer.innerHTML = '';
+
+        for (const date in groupedResults) {
+            const dayContainer = document.createElement('div');
+            dayContainer.className = 'old-results-day';
+            dayContainer.innerHTML = `
+                <div class="result-date">${new Date(date).toLocaleDateString('bn-IN')}</div>
+                <div class="results-grid"></div>
+            `;
+            oldResultsContainer.appendChild(dayContainer);
+
+            const resultsGrid = dayContainer.querySelector('.results-grid');
+            const dayResults = groupedResults[date].sort((a, b) => a.slot_id - b.slot_id);
+
+            for (let i = 1; i <= 8; i++) {
+                const result = dayResults.find(r => r.slot_id === i);
+                const patti = result ? result.patti_number : '- - -';
+                const single = result ? result.single_number : '-';
+
+                const resultBox = document.createElement('div');
+                resultBox.className = 'result-box-item';
+                resultBox.innerHTML = `
+                    <div class="patti">${patti}</div>
+                    <div class="single">${single}</div>
+                `;
+                resultsGrid.appendChild(resultBox);
+            }
+        }
+    }
+
+    function setupLoginButton() {
+        const loginLink = document.getElementById('login-link');
+        loginLink.href = 'admin.html';
+    }
+
+    function startLiveAnimation() {
+        const dateHeader = document.querySelector('.today-result .date-header');
+        dateHeader.classList.add('live-animation');
+    }
 }
