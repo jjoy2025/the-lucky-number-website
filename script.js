@@ -1,7 +1,7 @@
 
 // আপনার API Key এখানে বসান।
 // দয়া করে YOUR_API_KEY_HERE লেখাটি মুছে আপনার আসল Key বসিয়ে দিন।
-const API_KEY = "YOUR_API_KEY_HERE";
+const API_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndqamhkbWpxdHZ3bWhoa3VxaW53Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTUzODg2ODQsImV4cCI6MjA3MDk2NDY4NH0.-Dy15M98Bsl4iWSxA_MRefXO6EfvZFk1bJZkqV3Tfzw";
 const API_URL = "https://example.com/api/v1/results"; // এটি একটি উদাহরণ URL
 
 // DOMContentLoaded ইভেন্টটি নিশ্চিত করে যে HTML লোড হওয়ার পরেই এই কোডটি কাজ করা শুরু করবে।
