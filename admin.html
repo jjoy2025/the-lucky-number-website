@@ -34,8 +34,7 @@
                 <div class="tab-header">
                     <button class="tab-button active" data-tab="result-tab">Add Result</button>
                     <button class="tab-button" data-tab="dealer-tab">Manage Dealers</button>
-                    <button class="tab-button" data-tab="graph-tab">View Graphs</button>
-                </div>
+                    <button class="tab-button" data-tab="report-tab">View Reports & Graphs</button> </div>
 
                 <div id="result-tab" class="tab-content active">
                     <h2>Add New Result</h2>
@@ -71,6 +70,8 @@
                         <input type="text" id="dealer-name" placeholder="Dealer's Name" required>
                         <label for="dealer-phone">Phone:</label>
                         <input type="text" id="dealer-phone" placeholder="Phone Number" required>
+                        <label for="dealer-email">Email:</label> <input type="email" id="dealer-email" placeholder="Dealer's Email" required>
+                        <label for="dealer-password">Password:</label> <input type="password" id="dealer-password" placeholder="Set Password" required>
                         <button type="submit">Add Dealer</button>
                     </form>
                     <p id="dealer-message" class="success-message"></p>
@@ -86,9 +87,20 @@
                     <p id="token-message" class="success-message"></p>
                 </div>
 
-                <div id="graph-tab" class="tab-content">
-                    <h2>Result Graphs (Coming Soon)</h2>
-                    <p>এই ফিচারটি পরবর্তীতে যোগ করা হবে।</p>
+                <div id="report-tab" class="tab-content">
+                    <h2>রিপোর্ট এবং গ্রাফ</h2>
+                    <div class="report-controls">
+                        <label for="report-dealer-select">ডিলার সিলেক্ট করুন:</label>
+                        <select id="report-dealer-select" required></select>
+                        <label for="report-date-input">তারিখ সিলেক্ট করুন:</label>
+                        <input type="date" id="report-date-input" required>
+                        <button id="showReportBtn">রিপোর্ট দেখান</button>
+                        <button id="showGraphBtn">গ্রাফ দেখান</button>
+                    </div>
+                    <div id="reportContainer" style="margin-top: 20px;"></div>
+                    <div id="graphContainer" style="margin-top: 20px;">
+                        <canvas id="myChart" width="400" height="200"></canvas>
+                    </div>
                 </div>
             </section>
         </div>
