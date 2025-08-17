@@ -1,36 +1,240 @@
-// Chart.js লাইব্রেরি লোড করা
-import 'https://cdn.jsdelivr.net/npm/chart.js';
-
-// Supabase ক্লায়েন্ট তৈরি করা (আপনার Supabase URL এবং Key এখানে থাকবে)
+// আপনার Supabase URL এবং anon (public) Key এখানে বসান।
 const SUPABASE_URL = "https://urjcuxavrkyqttwtqvjx.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVyamN1eGF2cmt5cXR0d3Rxdmp4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU0MDI5NDIsImV4cCI6MjA3MDk3ODk0Mn0._HzIlEtRtwnsssFGonEqrHcqBm9WtXAx7bWa6S-9ErQ";
-const { createClient } = window.Supabase;
+// Supabase ক্লায়েন্ট তৈরি করা
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+import 'https://cdn.jsdelivr.net/npm/chart.js'; // Chart.js লাইব্রেরি লোড করা
+
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
-document.addEventListener('DOMContentLoaded', () => {
-    // Admin প্যানেল বা পাবলিক সাইট যাচাই করা
-    if (document.getElementById('login-form')) {
-        setupAdminPanel();
-    } else {
+// বর্তমান পেজ অনুযায়ী ফাংশন কল করা
+if (document.querySelector('#login-section')) {
+    setupAdminPanel();
+} else {
+    document.addEventListener('DOMContentLoaded', () => {
         fetchTodayResults();
         fetchOldResults();
         setupLoginButton();
         startLiveAnimation();
-    }
-});
+    });
+}
 
 function setupAdminPanel() {
-    // আগের কোড
-    // লগইন, রেজাল্ট, ডিলার, টোকেন ফর্মের লজিক...
-
-    // নতুন কোড: রিপোর্ট এবং গ্রাফের জন্য ইভেন্ট লিসেনার
-    const showReportBtn = document.getElementById('showReportBtn');
-    const showGraphBtn = document.getElementById('showGraphBtn');
+    const loginForm = document.getElementById('login-form');
+    const resultForm = document.getElementById('result-form');
+    const dealerForm = document.getElementById('dealer-form');
+    const tokenTransferForm = document.getElementById('token-transfer-form');
+    const logoutBtn = document.getElementById('logout-btn');
+    const authError = document.getElementById('auth-error');
+    const resultMessage = document.getElementById('result-message');
+    const dealerMessage = document.getElementById('dealer-message');
+    const tokenMessage = document.getElementById('token-message');
+    const loginSection = document.getElementById('login-section');
+    const dataEntrySection = document.getElementById('data-entry-section');
+    const dealerSelect = document.getElementById('dealer-select');
+    const tabButtons = document.querySelectorAll('.tab-button');
+    const tabContents = document.querySelectorAll('.tab-content');
+    
+    // নতুন রিপোর্টিং এবং গ্রাফিং উপাদান
     const reportDealerSelect = document.getElementById('report-dealer-select');
     const reportDateInput = document.getElementById('report-date-input');
+    const showReportBtn = document.getElementById('showReportBtn');
+    const showGraphBtn = document.getElementById('showGraphBtn');
     const reportContainer = document.getElementById('reportContainer');
     const graphContainer = document.getElementById('graphContainer');
+    let myChartInstance = null; // গ্রাফের জন্য ইনস্ট্যান্স
 
+    // টাব পরিবর্তন করা
+    tabButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            tabButtons.forEach(btn => btn.classList.remove('active'));
+            tabContents.forEach(content => content.classList.remove('active'));
+            
+            button.classList.add('active');
+            const tabId = button.dataset.tab;
+            document.getElementById(tabId).classList.add('active');
+            
+            // ট্যাব পরিবর্তনের সময় গ্রাফ পরিষ্কার করা
+            if (myChartInstance) {
+                myChartInstance.destroy();
+                myChartInstance = null;
+            }
+        });
+    });
+
+    // লগইন ফর্ম সাবমিট হলে
+    loginForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const email = document.getElementById('email-input').value;
+        const password = document.getElementById('password-input').value;
+
+        const { data, error } = await supabase.auth.signInWithPassword({
+            email: email,
+            password: password,
+        });
+
+        if (error) {
+            authError.textContent = 'Login failed: ' + error.message;
+        } else {
+            loginSection.style.display = 'none';
+            dataEntrySection.style.display = 'block';
+            await populateDealers();
+            await populateDealerReportSelect();
+        }
+    });
+
+    // রেজাল্ট ফর্ম সাবমিট হলে
+    resultForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const date = document.getElementById('date-input').value;
+        const baji = parseInt(document.getElementById('baji-input').value);
+        const patti = document.getElementById('patti-input').value;
+        const single = parseInt(document.getElementById('single-input').value);
+
+        const { data, error } = await supabase
+            .from('results')
+            .insert([{ date, slot_id: baji, patti_number: patti, single_number: single }]);
+
+        if (error) {
+            resultMessage.textContent = 'Failed to save result: ' + error.message;
+            resultMessage.style.color = 'red';
+        } else {
+            resultMessage.textContent = 'Result saved successfully!';
+            resultMessage.style.color = 'green';
+            resultForm.reset();
+        }
+    });
+
+    // নতুন ডিলার যোগ করার ফর্ম সাবমিট হলে
+    dealerForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const name = document.getElementById('dealer-name').value;
+        const phone = document.getElementById('dealer-phone').value;
+        const email = document.getElementById('dealer-email').value;
+        const password = document.getElementById('dealer-password').value;
+
+        const { user, error: authError } = await supabase.auth.signUp({
+            email: email,
+            password: password,
+            options: {
+                data: { role: 'dealer' }
+            }
+        });
+
+        if (authError) {
+            dealerMessage.textContent = 'Failed to create dealer user: ' + authError.message;
+            dealerMessage.style.color = 'red';
+            return;
+        }
+
+        const { data, error } = await supabase
+            .from('dealers')
+            .insert([{ user_id: user.id, name, phone_number: phone, token_balance: 0 }]);
+        
+        if (error) {
+            dealerMessage.textContent = 'Failed to add dealer to database: ' + error.message;
+            dealerMessage.style.color = 'red';
+        } else {
+            dealerMessage.textContent = 'Dealer added successfully!';
+            dealerMessage.style.color = 'green';
+            dealerForm.reset();
+            await populateDealers();
+            await populateDealerReportSelect();
+        }
+    });
+
+    // টোকেন ট্রান্সফার ফর্ম সাবমিট হলে
+    tokenTransferForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const dealerId = document.getElementById('dealer-select').value;
+        const amount = parseInt(document.getElementById('token-amount').value);
+
+        if (!dealerId || isNaN(amount) || amount <= 0) {
+            tokenMessage.textContent = 'Please enter a valid amount and select a dealer.';
+            tokenMessage.style.color = 'red';
+            return;
+        }
+        
+        const { data: dealer, error: fetchError } = await supabase
+            .from('dealers')
+            .select('token_balance')
+            .eq('id', dealerId)
+            .single();
+
+        if (fetchError) {
+            tokenMessage.textContent = 'Failed to fetch dealer balance: ' + fetchError.message;
+            tokenMessage.style.color = 'red';
+            return;
+        }
+
+        const newBalance = dealer.token_balance + amount;
+        
+        const { data: updateData, error: updateError } = await supabase
+            .from('dealers')
+            .update({ token_balance: newBalance })
+            .eq('id', dealerId);
+
+        if (updateError) {
+            tokenMessage.textContent = 'Failed to transfer tokens: ' + updateError.message;
+            tokenMessage.style.color = 'red';
+        } else {
+            const { data: transactionData, error: transactionError } = await supabase
+                .from('transactions')
+                .insert([{ sender_id: (await supabase.auth.getSession()).data.session.user.id, receiver_id: dealerId, amount: amount, type: 'credit' }]);
+            
+            if (transactionError) {
+                console.error('Failed to log transaction: ' + transactionError.message);
+            }
+            
+            tokenMessage.textContent = 'Tokens transferred successfully!';
+            tokenMessage.style.color = 'green';
+            tokenTransferForm.reset();
+            await populateDealers();
+            await populateDealerReportSelect();
+        }
+    });
+
+    // ডিলার তালিকা লোড করা
+    async function populateDealers() {
+        const { data: dealers, error } = await supabase
+            .from('dealers')
+            .select('*');
+        
+        if (error) {
+            console.error('Failed to load dealers:', error.message);
+            return;
+        }
+        
+        dealerSelect.innerHTML = '<option value="">Select Dealer</option>';
+        dealers.forEach(dealer => {
+            const option = document.createElement('option');
+            option.value = dealer.id;
+            option.textContent = `${dealer.name} (${dealer.token_balance || 0} tokens)`;
+            dealerSelect.appendChild(option);
+        });
+    }
+
+    // ডিলার রিপোর্ট ড্রপডাউন লোড করা
+    async function populateDealerReportSelect() {
+        const { data: dealers, error } = await supabase
+            .from('dealers')
+            .select('id, name');
+        
+        if (error) {
+            console.error('Failed to load dealers for report:', error.message);
+            return;
+        }
+        
+        reportDealerSelect.innerHTML = '<option value="">ডিলার সিলেক্ট করুন</option>';
+        dealers.forEach(dealer => {
+            const option = document.createElement('option');
+            option.value = dealer.id;
+            option.textContent = dealer.name;
+            reportDealerSelect.appendChild(option);
+        });
+    }
+
+    // রিপোর্ট দেখানোর বাটন
     showReportBtn.addEventListener('click', () => {
         const dealerId = reportDealerSelect.value;
         const reportDate = reportDateInput.value;
@@ -41,6 +245,7 @@ function setupAdminPanel() {
         }
     });
 
+    // গ্রাফ দেখানোর বাটন
     showGraphBtn.addEventListener('click', () => {
         const dealerId = reportDealerSelect.value;
         const reportDate = reportDateInput.value;
@@ -51,127 +256,128 @@ function setupAdminPanel() {
         }
     });
 
-    // ডিলারদের তালিকা লোড করা
-    async function loadDealers() {
-        const { data: dealers, error } = await supabase.from('dealers').select('*');
-        if (error) {
-            console.error('Failed to load dealers:', error.message);
-            return;
-        }
-        
-        // টোকেন আপডেটের ড্রপডাউন
-        const dealerSelect = document.getElementById('dealerSelect');
-        dealerSelect.innerHTML = '<option value="">ডিলার নির্বাচন করুন</option>';
-        // রিপোর্টের ড্রপডাউন
-        reportDealerSelect.innerHTML = '<option value="">ডিলার নির্বাচন করুন</option>';
-        
-        dealers.forEach(dealer => {
-            // টোকেন আপডেটের জন্য
-            const option1 = document.createElement('option');
-            option1.value = dealer.id;
-            option1.textContent = `${dealer.name} (${dealer.token || 0} টোকেন)`;
-            dealerSelect.appendChild(option1);
-
-            // রিপোর্টের জন্য
-            const option2 = document.createElement('option');
-            option2.value = dealer.id;
-            option2.textContent = dealer.name;
-            reportDealerSelect.appendChild(option2);
-        });
-    }
-
     // রিপোর্ট লোড এবং প্রদর্শন করার ফাংশন
     async function fetchAndDisplayReport(dealerId, reportDate) {
-        // এখানে আপনার গেমপ্লে এবং ফলাফলের ডেটা আনতে হবে
-        const { data: results, error } = await supabase
-            .from('results') // এখানে আপনার গেমের রেজাল্ট টেবিলের নাম দিন
+        const { data: plays, error } = await supabase
+            .from('plays')
             .select('*')
-            .eq('date', reportDate)
-            .order('slot_id', { ascending: true });
+            .eq('dealer_id', dealerId)
+            .eq('play_date', reportDate);
 
-        if (error || !results || results.length === 0) {
-            reportContainer.innerHTML = '<p>এই তারিখে কোনো ডেটা পাওয়া যায়নি।</p>';
+        if (error || !plays || plays.length === 0) {
+            reportContainer.innerHTML = '<p>এই তারিখে কোনো রিপোর্ট পাওয়া যায়নি।</p>';
             return;
         }
 
-        // এখানে আমরা একটি সাধারণ HTML টেবিল তৈরি করব
-        let htmlContent = '<h2>' + reportDate + ' এর রিপোর্ট</h2>';
-        htmlContent += '<table border="1" style="width:100%; text-align:center;">';
-        htmlContent += '<thead><tr><th>বাজি</th><th>ফলাফল (পত্তি)</th><th>ফলাফল (সিঙ্গেল)</th></tr></thead>';
-        htmlContent += '<tbody>';
+        const { data: results } = await supabase
+            .from('results')
+            .select('*')
+            .eq('date', reportDate);
+            
+        reportContainer.innerHTML = '<h2>' + reportDate + ' এর রিপোর্ট</h2>';
+        reportContainer.innerHTML += '<table border="1" style="width:100%; text-align:center;">';
+        reportContainer.innerHTML += '<thead><tr><th>সময়</th><th>খেলার নম্বর</th><th>উইন নম্বর</th><th>খরচ</th><th>প্রাপ্তি</th><th>লাভ/ক্ষতি</th></tr></thead>';
+        reportContainer.innerHTML += '<tbody>';
         
-        results.forEach(result => {
-            htmlContent += `<tr>
-                <td>${result.slot_id}</td>
-                <td>${result.patti_number}</td>
-                <td>${result.single_number}</td>
-            </tr>`;
+        let totalSpent = 0;
+        let totalPrize = 0;
+
+        plays.forEach(play => {
+            const result = results.find(r => r.slot_id === play.baji_slot);
+            const winningNumber = result ? result.single_number : '-';
+            
+            const playedNumbers = Object.keys(play.played_numbers).map(num => `${num}(${play.played_numbers[num]})`).join(', ');
+            
+            const prizeTokens = play.played_numbers[winningNumber] * 90; // প্রাইস টোকেন হিসাব
+            const profitLoss = prizeTokens - play.total_spent_tokens;
+
+            totalSpent += play.total_spent_tokens;
+            totalPrize += prizeTokens;
+
+            reportContainer.innerHTML += `
+                <tr>
+                    <td>${play.play_time}</td>
+                    <td>${playedNumbers}</td>
+                    <td>${winningNumber}</td>
+                    <td>${play.total_spent_tokens}</td>
+                    <td>${prizeTokens}</td>
+                    <td>${profitLoss}</td>
+                </tr>
+            `;
         });
         
-        htmlContent += '</tbody></table>';
-        reportContainer.innerHTML = htmlContent;
+        reportContainer.innerHTML += `
+            <tr>
+                <td colspan="3">মোট</td>
+                <td>${totalSpent}</td>
+                <td>${totalPrize}</td>
+                <td>${totalPrize - totalSpent}</td>
+            </tr>
+        `;
+        reportContainer.innerHTML += '</tbody></table>';
         graphContainer.innerHTML = '';
     }
 
     // গ্রাফ লোড এবং প্রদর্শন করার ফাংশন
-    let myChartInstance = null;
     async function fetchAndDisplayGraph(dealerId, reportDate) {
-        // এখানে আপনার গেমপ্লে ডেটা আনতে হবে
         const { data: plays, error } = await supabase
-            .from('plays') // এখানে আপনার গেমের ডেটা টেবিলের নাম দিন
-            .select('number, token_amount')
+            .from('plays')
+            .select('played_numbers')
             .eq('dealer_id', dealerId)
             .eq('play_date', reportDate);
 
         if (error || !plays || plays.length === 0) {
             graphContainer.innerHTML = '<p>এই তারিখে কোনো ডেটা পাওয়া যায়নি।</p>';
+            if (myChartInstance) myChartInstance.destroy();
             return;
         }
-
-        // ডেটা প্রক্রিয়াকরণ
+        
         const tokenData = {};
         plays.forEach(play => {
-            if (tokenData[play.number]) {
-                tokenData[play.number] += play.token_amount;
-            } else {
-                tokenData[play.number] = play.token_amount;
+            for (const number in play.played_numbers) {
+                const amount = play.played_numbers[number];
+                if (tokenData[number]) {
+                    tokenData[number] += amount;
+                } else {
+                    tokenData[number] = amount;
+                }
             }
         });
 
-        const labels = Object.keys(tokenData);
-        const data = Object.values(tokenData);
+        const labels = Object.keys(tokenData).sort((a,b) => a - b);
+        const data = labels.map(label => tokenData[label]);
 
-        // গ্রাফ তৈরি
         if (myChartInstance) {
             myChartInstance.destroy();
         }
 
         const ctx = document.getElementById('myChart').getContext('2d');
         myChartInstance = new Chart(ctx, {
-            type: 'bar', // আপনি 'pie' বা 'line' ও ব্যবহার করতে পারেন
+            type: 'bar',
             data: {
                 labels: labels,
                 datasets: [{
-                    label: 'টোকেন পড়েছে',
+                    label: 'সবচেয়ে বেশি টোকেন পড়েছে',
                     data: data,
-                    backgroundColor: 'rgba(255, 159, 64, 0.5)',
-                    borderColor: 'rgba(255, 159, 64, 1)',
+                    backgroundColor: 'rgba(243, 156, 18, 0.7)',
+                    borderColor: 'rgba(243, 156, 18, 1)',
                     borderWidth: 1
                 }]
             },
             options: {
+                responsive: true,
                 scales: {
-                    y: {
-                        beginAtZero: true
-                    }
+                    x: { title: { display: true, text: 'নম্বর' } },
+                    y: { beginAtZero: true, title: { display: true, text: 'টোকেন' } }
                 }
             }
         });
-
         reportContainer.innerHTML = '';
     }
+    
+    // লগআউট বাটনে ক্লিক হলে
+    logoutBtn.addEventListener('click', async () => {
+        const { error } = await supabase.auth.signOut();
+        window.location.reload();
+    });
 }
-
-// এই কোডগুলো আপনার আগের কোড থেকে সরাসরি কপি করা হয়েছে
-// ... (fetchTodayResults, fetchOldResults, setupLoginButton, startLiveAnimation)
-// আপনার আগের কোড থেকে এগুলো এখানে পেস্ট করুন।
