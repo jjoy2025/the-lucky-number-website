@@ -1,0 +1,70 @@
+.admin-section {
+    background-color: #34495e;
+    padding: 20px;
+    margin: 20px auto;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    max-width: 500px;
+}
+
+#login-form, #result-form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.admin-section h2 {
+    text-align: center;
+    color: #f39c12;
+}
+
+.admin-section input, .admin-section select, .admin-section button {
+    width: 100%;
+    padding: 10px;
+    border: none;
+    border-radius: 5px;
+}
+
+.admin-section input, .admin-section select {
+    background-color: #ecf0f1;
+    color: #2c3e50;
+}
+
+.admin-section button {
+    background-color: #f39c12;
+    color: #2c3e50;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.admin-section button:hover {
+    background-color: #e67e22;
+}
+
+.error-message {
+    color: #e74c3c;
+    font-weight: bold;
+    text-align: center;
+    margin-top: 10px;
+}
+
+.success-message {
+    color: #2ecc71;
+    font-weight: bold;
+    text-align: center;
+    margin-top: 10px;
+}
+
+.logout-container {
+    text-align: center;
+    margin-top: 20px;
+}
+
+.logout-container button {
+    background-color: #c0392b;
+}
+
+.logout-container button:hover {
+    background-color: #e74c3c;
+}
