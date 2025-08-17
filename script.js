@@ -1,7 +1,7 @@
 // আপনার Supabase URL এবং anon (public) Key এখানে বসান।
 const SUPABASE_URL = "https://urjcuxavrkyqttwtqvjx.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVyamN1eGF2cmt5cXR0d3Rxdmp4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU0MDI5NDIsImV4cCI6MjA3MDk3ODk0Mn0._HzIlEtRtwnsssFGonEqrHcqBm9WtXAx7bWa6S-9ErQ";
-// Supabase ক্লায়েন্ট তৈরি করা
+
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
@@ -32,6 +32,15 @@ function setupAdminPanel() {
     const dealerSelect = document.getElementById('dealer-select');
     const tabButtons = document.querySelectorAll('.tab-button');
     const tabContents = document.querySelectorAll('.tab-content');
+    
+    // নতুন রিপোর্টিং এবং গ্রাফিং উপাদান
+    const dealerReportSelect = document.getElementById('dealer-report-select');
+    const reportDateInput = document.getElementById('report-date-input');
+    const reportDownloadBtn = document.getElementById('report-download-btn');
+    const tokenHistoryBtn = document.getElementById('token-history-btn');
+    const tokenHistoryContainer = document.getElementById('token-history-container');
+    const graphViewBtn = document.getElementById('graph-view-btn');
+    const graphContainer = document.getElementById('graph-container');
 
     // টাব পরিবর্তন করা
     tabButtons.forEach(button => {
@@ -62,6 +71,7 @@ function setupAdminPanel() {
             loginSection.style.display = 'none';
             dataEntrySection.style.display = 'block';
             await populateDealers();
+            await populateDealerReportSelect();
         }
     });
 
@@ -92,15 +102,14 @@ function setupAdminPanel() {
         e.preventDefault();
         const name = document.getElementById('dealer-name').value;
         const phone = document.getElementById('dealer-phone').value;
-        const email = document.getElementById('dealer-email').value; // নতুন ইমেইল ইনপুট
-        const password = document.getElementById('dealer-password').value; // নতুন পাসওয়ার্ড ইনপুট
+        const email = document.getElementById('dealer-email').value;
+        const password = document.getElementById('dealer-password').value;
 
-        // Supabase Auth-এ নতুন ইউজার তৈরি করা
         const { user, error: authError } = await supabase.auth.signUp({
             email: email,
             password: password,
             options: {
-                data: { role: 'dealer' } // ইউজারকে ডিলার হিসেবে মার্ক করা
+                data: { role: 'dealer' }
             }
         });
 
@@ -110,10 +119,9 @@ function setupAdminPanel() {
             return;
         }
 
-        // 'dealers' টেবিলে নতুন ডিলার যোগ করা
         const { data, error } = await supabase
             .from('dealers')
-            .insert([{ user_id: user.id, name, phone_number: phone, token_balance: 0 }]); // user_id যোগ করা
+            .insert([{ user_id: user.id, name, phone_number: phone, token_balance: 0 }]);
         
         if (error) {
             dealerMessage.textContent = 'Failed to add dealer to database: ' + error.message;
@@ -122,7 +130,8 @@ function setupAdminPanel() {
             dealerMessage.textContent = 'Dealer added successfully!';
             dealerMessage.style.color = 'green';
             dealerForm.reset();
-            await populateDealers(); // ডিলার তালিকা আপডেট করা
+            await populateDealers();
+            await populateDealerReportSelect();
         }
     });
 
@@ -138,7 +147,6 @@ function setupAdminPanel() {
             return;
         }
         
-        // টোকেন ট্রান্সফার লজিক
         const { data: dealer, error: fetchError } = await supabase
             .from('dealers')
             .select('token_balance')
@@ -164,7 +172,7 @@ function setupAdminPanel() {
         } else {
             const { data: transactionData, error: transactionError } = await supabase
                 .from('transactions')
-                .insert([{ sender_id: (await supabase.auth.getSession()).data.session.user.id, receiver_id: dealerId, amount: amount }]);
+                .insert([{ sender_id: (await supabase.auth.getSession()).data.session.user.id, receiver_id: dealerId, amount: amount, type: 'credit' }]);
             
             if (transactionError) {
                 console.error('Failed to log transaction: ' + transactionError.message);
@@ -173,7 +181,8 @@ function setupAdminPanel() {
             tokenMessage.textContent = 'Tokens transferred successfully!';
             tokenMessage.style.color = 'green';
             tokenTransferForm.reset();
-            await populateDealers(); // ডিলার তালিকা আপডেট করা
+            await populateDealers();
+            await populateDealerReportSelect();
         }
     });
 
@@ -192,10 +201,82 @@ function setupAdminPanel() {
         dealers.forEach(dealer => {
             const option = document.createElement('option');
             option.value = dealer.id;
-            option.textContent = `${dealer.name} (${dealer.token_balance} tokens)`;
+            option.textContent = `${dealer.name} (${dealer.token_balance || 0} tokens)`;
             dealerSelect.appendChild(option);
         });
     }
+
+    // ডিলার রিপোর্ট ড্রপডাউন লোড করা
+    async function populateDealerReportSelect() {
+        const { data: dealers, error } = await supabase
+            .from('dealers')
+            .select('id, name');
+        
+        if (error) {
+            console.error('Failed to load dealers for report:', error.message);
+            return;
+        }
+        
+        dealerReportSelect.innerHTML = '<option value="">ডিলার সিলেক্ট করুন</option>';
+        dealers.forEach(dealer => {
+            const option = document.createElement('option');
+            option.value = dealer.id;
+            option.textContent = dealer.name;
+            dealerReportSelect.appendChild(option);
+        });
+    }
+
+    // টোকেন হিস্টোরি দেখানোর বাটন
+    tokenHistoryBtn.addEventListener('click', async () => {
+        const dealerId = dealerReportSelect.value;
+        if (!dealerId) {
+            alert('অনুগ্রহ করে একটি ডিলার সিলেক্ট করুন।');
+            return;
+        }
+
+        const { data: transactions, error } = await supabase
+            .from('transactions')
+            .select('*, sender:sender_id(name), receiver:receiver_id(name)')
+            .eq('receiver_id', dealerId)
+            .order('created_at', { ascending: false });
+
+        if (error) {
+            alert('হিস্টোরি লোড করা সম্ভব হয়নি: ' + error.message);
+            return;
+        }
+        
+        tokenHistoryContainer.innerHTML = '';
+        if (transactions.length === 0) {
+            tokenHistoryContainer.innerHTML = '<p>কোনো টোকেন হিস্টোরি পাওয়া যায়নি।</p>';
+            return;
+        }
+        
+        const table = document.createElement('table');
+        table.innerHTML = `
+            <thead>
+                <tr>
+                    <th>তারিখ</th>
+                    <th>পরিমাণ</th>
+                    <th>ধরণ</th>
+                    <th>প্রেরক</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        `;
+        
+        const tbody = table.querySelector('tbody');
+        transactions.forEach(tx => {
+            const row = tbody.insertRow();
+            row.innerHTML = `
+                <td>${new Date(tx.created_at).toLocaleString()}</td>
+                <td>${tx.amount}</td>
+                <td>${tx.type}</td>
+                <td>${tx.sender ? tx.sender.name : 'অ্যাডমিন'}</td>
+            `;
+        });
+
+        tokenHistoryContainer.appendChild(table);
+    });
 
     // লগআউট বাটনে ক্লিক হলে
     logoutBtn.addEventListener('click', async () => {
@@ -203,7 +284,6 @@ function setupAdminPanel() {
         window.location.reload();
     });
 }
-
 
 // index.html এর জন্য ফাংশনালিটি
 function startLiveAnimation() {
@@ -250,14 +330,12 @@ async function fetchOldResults() {
     const oldResultsContainer = document.querySelector('.old-results-container');
     oldResultsContainer.innerHTML = '';
     
-    // আজকের তারিখ বের করা
     const today = new Date().toISOString().split('T')[0];
 
-    // আজকের আগের ডেটা লোড করা
     let { data: results, error } = await supabase
         .from('results')
         .select('*')
-        .lt('date', today) // এখানে ফিল্টার যোগ করা হয়েছে
+        .lt('date', today)
         .order('date', { ascending: false });
 
     if (error) {
@@ -302,4 +380,47 @@ function setupLoginButton() {
             window.location.href = 'admin.html';
         });
     }
+}
+
+// রিপোর্ট ডাউনলোড ফাংশন
+async function generateReport(dealerId, reportDate) {
+    const { data: dailyPlays, error } = await supabase
+        .from('daily_plays')
+        .select('*')
+        .eq('dealer_id', dealerId)
+        .eq('play_date', reportDate);
+
+    if (error) {
+        alert('রিপোর্ট লোড করা সম্ভব হয়নি: ' + error.message);
+        return;
+    }
+
+    if (dailyPlays.length === 0) {
+        alert('এই তারিখে কোনো রিপোর্ট পাওয়া যায়নি।');
+        return;
+    }
+
+    // CSV ফাইল তৈরি করা
+    let csvContent = "data:text/csv;charset=utf-8,";
+    csvContent += "Dealer Name,Play Time,Played Numbers,Winning Number,Total Tokens Spent,Total Prize Tokens\r\n";
+    
+    const dealerName = (await supabase.from('dealers').select('name').eq('id', dealerId).single()).data.name;
+
+    dailyPlays.forEach(play => {
+        const playedNumbers = Object.keys(play.plays).map(num => `${num}(${play.plays[num]})`).join('; ');
+        
+        // এখানে হাইলাইট করার লজিক দরকার। CSV-তে হাইলাইট করা যায় না, তাই একটি নোট যোগ করা হবে।
+        const winningNumber = play.winning_number;
+        
+        csvContent += `${dealerName},${play.play_time},"${playedNumbers}",${winningNumber},${play.total_spent},${play.total_prize}\r\n`;
+    });
+
+    // ফাইল ডাউনলোড
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `report_${dealerName}_${reportDate}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
 }
