@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Lucky Number</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <header class="header">
+        <h1>The Lucky Number</h1>
+        <a href="#" id="login-link">Login</a>
+    </header>
+
+    <main class="container">
+
+        <section class="today-result">
+            <h2>Today Result</h2>
+            <div class="live-animation"></div>
+            <p class="date"></p>
+            <div class="result-box">
+                <div class="patti-number">
+                    <span>Patti Number</span>
+                    <span id="patti">---</span>
+                </div>
+                <div class="single-number">
+                    <span>Single Number</span>
+                    <span id="single">---</span>
+                </div>
+            </div>
+        </section>
+
+        <section class="old-results">
+            <h2>Old Results</h2>
+            <div class="results-container">
+                </div>
+            <button id="show-more-btn">Show More Results</button>
+        </section>
+
+        <section class="time-schedule">
+            <h2>Result Time Schedule</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>BAJI</th>
+                        <th>RESULT TIME</th>
+                    </tr>
+                </thead>
+                <tbody id="schedule-body">
+                    </tbody>
+            </table>
+        </section>
+
+    </main>
+
+    <script src="script.js" type="module"></script>
+
+</body>
+</html>
