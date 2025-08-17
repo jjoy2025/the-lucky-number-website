@@ -1,19 +1,84 @@
 // আপনার Supabase URL এবং anon (public) Key এখানে বসান।
-const SUPABASE_URL = "https://wjjhdmjqtvwmhhkuqinw.supabase.co";
-const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndqamhkbWpxdHZ3bWhoa3VxaW53Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTUzODg2ODQsImV4cCI6MjA3MDk2NDY4NH0.-Dy15M98Bsl4iWSxA_MRefXO6EfvZFk1bJZkqV3Tfzw";
+const SUPABASE_URL = "https://urjcuxavrkyqttwtqvjx.supabase.co";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVyamN1eGF2cmt5cXR0d3Rxdmp4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU0MDI5NDIsImV4cCI6MjA3MDk3ODk0Mn0._HzIlEtRtwnsssFGonEqrHcqBm9WtXAx7bWa6S-9ErQ";
 
 // Supabase ক্লায়েন্ট তৈরি করা
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
-document.addEventListener('DOMContentLoaded', () => {
-    fetchTodayResults();
-    fetchOldResults();
-    setupLoginButton();
-    startLiveAnimation();
-});
+// বর্তমান পেজ অনুযায়ী ফাংশন কল করা
+if (document.querySelector('#login-section')) {
+    // এটি admin.html পেজের জন্য
+    setupAdminPanel();
+} else {
+    // এটি index.html পেজের জন্য
+    document.addEventListener('DOMContentLoaded', () => {
+        fetchTodayResults();
+        fetchOldResults();
+        setupLoginButton();
+        startLiveAnimation();
+    });
+}
 
-// লাইভ অ্যানিমেশন শুরু করার ফাংশন
+// admin.html-এর জন্য ফাংশনালিটি
+function setupAdminPanel() {
+    const loginForm = document.getElementById('login-form');
+    const resultForm = document.getElementById('result-form');
+    const logoutBtn = document.getElementById('logout-btn');
+    const authError = document.getElementById('auth-error');
+    const resultMessage = document.getElementById('result-message');
+    const loginSection = document.getElementById('login-section');
+    const dataEntrySection = document.getElementById('data-entry-section');
+
+    // লগইন ফর্ম সাবমিট হলে
+    loginForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const email = document.getElementById('email-input').value;
+        const password = document.getElementById('password-input').value;
+
+        const { data, error } = await supabase.auth.signInWithPassword({
+            email: email,
+            password: password,
+        });
+
+        if (error) {
+            authError.textContent = 'Login failed: ' + error.message;
+        } else {
+            loginSection.style.display = 'none';
+            dataEntrySection.style.display = 'block';
+        }
+    });
+
+    // রেজাল্ট ফর্ম সাবমিট হলে
+    resultForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const date = document.getElementById('date-input').value;
+        const baji = parseInt(document.getElementById('baji-input').value);
+        const patti = document.getElementById('patti-input').value;
+        const single = parseInt(document.getElementById('single-input').value);
+
+        const { data, error } = await supabase
+            .from('results')
+            .insert([{ date, slot_id: baji, patti_number: patti, single_number: single }]);
+
+        if (error) {
+            resultMessage.textContent = 'Failed to save result: ' + error.message;
+            resultMessage.style.color = 'red';
+        } else {
+            resultMessage.textContent = 'Result saved successfully!';
+            resultMessage.style.color = 'green';
+            resultForm.reset();
+        }
+    });
+
+    // লগআউট বাটনে ক্লিক হলে
+    logoutBtn.addEventListener('click', async () => {
+        const { error } = await supabase.auth.signOut();
+        window.location.reload();
+    });
+}
+
+// index.html এর জন্য ফাংশনালিটি
 function startLiveAnimation() {
     const liveAnimation = document.querySelector('.today-result .date-header');
     if (liveAnimation) {
@@ -21,70 +86,53 @@ function startLiveAnimation() {
     }
 }
 
-// আজকের ফলাফল দেখানোর জন্য ফাংশন
 async function fetchTodayResults() {
     const resultsContainer = document.querySelector('.results-grid');
     resultsContainer.innerHTML = '';
     
-    // আজকের তারিখ বের করা
     const today = new Date().toISOString().split('T')[0];
-
-    // Supabase থেকে আজকের ডেটা লোড করা
     let { data: results, error } = await supabase
         .from('results')
         .select('*')
         .eq('date', today)
-        .order('slot_id', { ascending: true }); // আপনার কলামের নাম `slot_id` ব্যবহার করা হয়েছে
+        .order('slot_id', { ascending: true });
 
     if (error) {
-        console.error('আজকের ডেটা লোড করার সময় ভুল হয়েছে:', error);
+        console.error('Error fetching today\'s data:', error);
         return;
     }
 
-    // ডেটা লোড হলে তা প্রদর্শন করা
     if (results.length > 0) {
         results.forEach(result => {
             const resultItem = document.createElement('div');
             resultItem.className = 'result-box-item';
-            resultItem.innerHTML = `
-                <div class="patti">${result.patti_number}</div>
-                <div class="single">${result.single_number}</div>
-            `; // আপনার কলামের নাম ব্যবহার করা হয়েছে
+            resultItem.innerHTML = `<div class="patti">${result.patti_number}</div><div class="single">${result.single_number}</div>`;
             resultsContainer.appendChild(resultItem);
         });
     } else {
-        // যদি কোনো ডেটা না থাকে
         for (let i = 0; i < 8; i++) {
             const resultItem = document.createElement('div');
             resultItem.className = 'result-box-item';
-            resultItem.innerHTML = `
-                <div class="patti">---</div>
-                <div class="single">-</div>
-            `;
+            resultItem.innerHTML = `<div class="patti">---</div><div class="single">-</div>`;
             resultsContainer.appendChild(resultItem);
         }
     }
-
-    console.log('আজকের ফলাফল লোড হয়েছে।');
 }
 
-// পুরোনো ফলাফল দেখানোর জন্য ফাংশন
 async function fetchOldResults() {
     const oldResultsContainer = document.querySelector('.old-results-container');
     oldResultsContainer.innerHTML = '';
 
-    // Supabase থেকে পুরোনো ডেটা লোড করা
     let { data: results, error } = await supabase
         .from('results')
         .select('*')
         .order('date', { ascending: false });
 
     if (error) {
-        console.error('পুরোনো ডেটা লোড করার সময় ভুল হয়েছে:', error);
+        console.error('Error fetching old data:', error);
         return;
     }
     
-    // ডেটা তারিখ অনুযায়ী গ্রুপ করা
     const groupedResults = results.reduce((acc, curr) => {
         const date = curr.date;
         if (!acc[date]) {
@@ -94,7 +142,6 @@ async function fetchOldResults() {
         return acc;
     }, {});
     
-    // গ্রুপ করা ডেটা প্রদর্শন করা
     for (const date in groupedResults) {
         const dayContainer = document.createElement('div');
         dayContainer.className = 'old-results-day';
@@ -103,31 +150,24 @@ async function fetchOldResults() {
         const resultsGrid = document.createElement('div');
         resultsGrid.className = 'results-grid';
 
-        // প্রতিটি দিনের ফলাফল প্রদর্শন
         groupedResults[date].sort((a, b) => a.slot_id - b.slot_id).forEach(result => {
             const resultItem = document.createElement('div');
             resultItem.className = 'result-box-item';
-            resultItem.innerHTML = `
-                <div class="patti">${result.patti_number}</div>
-                <div class="single">${result.single_number}</div>
-            `;
+            resultItem.innerHTML = `<div class="patti">${result.patti_number}</div><div class="single">${result.single_number}</div>`;
             resultsGrid.appendChild(resultItem);
         });
         
         dayContainer.appendChild(resultsGrid);
         oldResultsContainer.appendChild(dayContainer);
     }
-    
-    console.log('পুরোনো ফলাফল লোড হয়েছে।');
 }
 
-// লগইন বাটনের জন্য ফাংশন
 function setupLoginButton() {
     const loginLink = document.getElementById('login-link');
     if (loginLink) {
         loginLink.addEventListener('click', (event) => {
             event.preventDefault();
-            alert('লগইন পেজে যাচ্ছে...');
+            window.location.href = 'admin.html';
         });
     }
 }
