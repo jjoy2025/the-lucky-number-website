@@ -8,10 +8,8 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 // বর্তমান পেজ অনুযায়ী ফাংশন কল করা
 if (document.querySelector('#login-section')) {
-    // এটি admin.html পেজের জন্য
     setupAdminPanel();
 } else {
-    // এটি index.html পেজের জন্য
     document.addEventListener('DOMContentLoaded', () => {
         fetchTodayResults();
         fetchOldResults();
@@ -20,15 +18,33 @@ if (document.querySelector('#login-section')) {
     });
 }
 
-// admin.html-এর জন্য ফাংশনালিটি
 function setupAdminPanel() {
     const loginForm = document.getElementById('login-form');
     const resultForm = document.getElementById('result-form');
+    const dealerForm = document.getElementById('dealer-form');
+    const tokenTransferForm = document.getElementById('token-transfer-form');
     const logoutBtn = document.getElementById('logout-btn');
     const authError = document.getElementById('auth-error');
     const resultMessage = document.getElementById('result-message');
+    const dealerMessage = document.getElementById('dealer-message');
+    const tokenMessage = document.getElementById('token-message');
     const loginSection = document.getElementById('login-section');
     const dataEntrySection = document.getElementById('data-entry-section');
+    const dealerSelect = document.getElementById('dealer-select');
+    const tabButtons = document.querySelectorAll('.tab-button');
+    const tabContents = document.querySelectorAll('.tab-content');
+
+    // টাব পরিবর্তন করা
+    tabButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            tabButtons.forEach(btn => btn.classList.remove('active'));
+            tabContents.forEach(content => content.classList.remove('active'));
+            
+            button.classList.add('active');
+            const tabId = button.dataset.tab;
+            document.getElementById(tabId).classList.add('active');
+        });
+    });
 
     // লগইন ফর্ম সাবমিট হলে
     loginForm.addEventListener('submit', async (e) => {
@@ -46,6 +62,7 @@ function setupAdminPanel() {
         } else {
             loginSection.style.display = 'none';
             dataEntrySection.style.display = 'block';
+            await populateDealers();
         }
     });
 
@@ -71,12 +88,106 @@ function setupAdminPanel() {
         }
     });
 
+    // নতুন ডিলার যোগ করার ফর্ম সাবমিট হলে
+    dealerForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const name = document.getElementById('dealer-name').value;
+        const phone = document.getElementById('dealer-phone').value;
+
+        const { data, error } = await supabase
+            .from('dealers')
+            .insert([{ name, phone_number: phone, token_balance: 0 }]);
+        
+        if (error) {
+            dealerMessage.textContent = 'Failed to add dealer: ' + error.message;
+            dealerMessage.style.color = 'red';
+        } else {
+            dealerMessage.textContent = 'Dealer added successfully!';
+            dealerMessage.style.color = 'green';
+            dealerForm.reset();
+            await populateDealers(); // ডিলার তালিকা আপডেট করা
+        }
+    });
+
+    // টোকেন ট্রান্সফার ফর্ম সাবমিট হলে
+    tokenTransferForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const dealerId = document.getElementById('dealer-select').value;
+        const amount = parseInt(document.getElementById('token-amount').value);
+
+        if (!dealerId || isNaN(amount) || amount <= 0) {
+            tokenMessage.textContent = 'Please enter a valid amount and select a dealer.';
+            tokenMessage.style.color = 'red';
+            return;
+        }
+        
+        // টোকেন ট্রান্সফার লজিক
+        const { data: dealer, error: fetchError } = await supabase
+            .from('dealers')
+            .select('token_balance')
+            .eq('id', dealerId)
+            .single();
+
+        if (fetchError) {
+            tokenMessage.textContent = 'Failed to fetch dealer balance: ' + fetchError.message;
+            tokenMessage.style.color = 'red';
+            return;
+        }
+
+        const newBalance = dealer.token_balance + amount;
+        
+        const { data: updateData, error: updateError } = await supabase
+            .from('dealers')
+            .update({ token_balance: newBalance })
+            .eq('id', dealerId);
+
+        if (updateError) {
+            tokenMessage.textContent = 'Failed to transfer tokens: ' + updateError.message;
+            tokenMessage.style.color = 'red';
+        } else {
+            // লেনদেনের রেকর্ড রাখা
+            const { data: transactionData, error: transactionError } = await supabase
+                .from('transactions')
+                .insert([{ sender_id: (await supabase.auth.getSession()).data.session.user.id, receiver_id: dealerId, amount: amount }]);
+            
+            if (transactionError) {
+                console.error('Failed to log transaction: ' + transactionError.message);
+            }
+            
+            tokenMessage.textContent = 'Tokens transferred successfully!';
+            tokenMessage.style.color = 'green';
+            tokenTransferForm.reset();
+            await populateDealers(); // ডিলার তালিকা আপডেট করা
+        }
+    });
+
+    // ডিলার তালিকা লোড করা
+    async function populateDealers() {
+        const { data: dealers, error } = await supabase
+            .from('dealers')
+            .select('*');
+        
+        if (error) {
+            console.error('Failed to load dealers:', error.message);
+            return;
+        }
+        
+        dealerSelect.innerHTML = '<option value="">Select Dealer</option>';
+        dealers.forEach(dealer => {
+            const option = document.createElement('option');
+            option.value = dealer.id;
+            option.textContent = `${dealer.name} (${dealer.token_balance} tokens)`;
+            dealerSelect.appendChild(option);
+        });
+    }
+
     // লগআউট বাটনে ক্লিক হলে
     logoutBtn.addEventListener('click', async () => {
         const { error } = await supabase.auth.signOut();
         window.location.reload();
     });
 }
+
 
 // index.html এর জন্য ফাংশনালিটি
 function startLiveAnimation() {
