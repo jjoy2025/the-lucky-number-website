@@ -1,7 +1,6 @@
 // আপনার Supabase URL এবং anon (public) Key এখানে বসান।
 const SUPABASE_URL = "https://urjcuxavrkyqttwtqvjx.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVyamN1eGF2cmt5cXR0d3Rxdmp4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU0MDI5NDIsImV4cCI6MjA3MDk3ODk0Mn0._HzIlEtRtwnsssFGonEqrHcqBm9WtXAx7bWa6S-9ErQ";
-
 // Supabase ক্লায়েন্ট তৈরি করা
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -93,13 +92,31 @@ function setupAdminPanel() {
         e.preventDefault();
         const name = document.getElementById('dealer-name').value;
         const phone = document.getElementById('dealer-phone').value;
+        const email = document.getElementById('dealer-email').value; // নতুন ইমেইল ইনপুট
+        const password = document.getElementById('dealer-password').value; // নতুন পাসওয়ার্ড ইনপুট
 
+        // Supabase Auth-এ নতুন ইউজার তৈরি করা
+        const { user, error: authError } = await supabase.auth.signUp({
+            email: email,
+            password: password,
+            options: {
+                data: { role: 'dealer' } // ইউজারকে ডিলার হিসেবে মার্ক করা
+            }
+        });
+
+        if (authError) {
+            dealerMessage.textContent = 'Failed to create dealer user: ' + authError.message;
+            dealerMessage.style.color = 'red';
+            return;
+        }
+
+        // 'dealers' টেবিলে নতুন ডিলার যোগ করা
         const { data, error } = await supabase
             .from('dealers')
-            .insert([{ name, phone_number: phone, token_balance: 0 }]);
+            .insert([{ user_id: user.id, name, phone_number: phone, token_balance: 0 }]); // user_id যোগ করা
         
         if (error) {
-            dealerMessage.textContent = 'Failed to add dealer: ' + error.message;
+            dealerMessage.textContent = 'Failed to add dealer to database: ' + error.message;
             dealerMessage.style.color = 'red';
         } else {
             dealerMessage.textContent = 'Dealer added successfully!';
@@ -145,7 +162,6 @@ function setupAdminPanel() {
             tokenMessage.textContent = 'Failed to transfer tokens: ' + updateError.message;
             tokenMessage.style.color = 'red';
         } else {
-            // লেনদেনের রেকর্ড রাখা
             const { data: transactionData, error: transactionError } = await supabase
                 .from('transactions')
                 .insert([{ sender_id: (await supabase.auth.getSession()).data.session.user.id, receiver_id: dealerId, amount: amount }]);
@@ -233,10 +249,15 @@ async function fetchTodayResults() {
 async function fetchOldResults() {
     const oldResultsContainer = document.querySelector('.old-results-container');
     oldResultsContainer.innerHTML = '';
+    
+    // আজকের তারিখ বের করা
+    const today = new Date().toISOString().split('T')[0];
 
+    // আজকের আগের ডেটা লোড করা
     let { data: results, error } = await supabase
         .from('results')
         .select('*')
+        .lt('date', today) // এখানে ফিল্টার যোগ করা হয়েছে
         .order('date', { ascending: false });
 
     if (error) {
