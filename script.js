@@ -1,109 +1,133 @@
- // আপনার API Key এখানে বসান।
- // দয়া করে YOUR_API_KEY_HERE লেখাটি মুছে আপনার আসল Key বসিয়ে দিন।
- const API_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndqamhkbWpxdHZ3bWhoa3VxaW53Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTUzODg2ODQsImV4cCI6MjA3MDk2NDY4NH0.-Dy15M98Bsl4iWSxA_MRefXO6EfvZFk1bJZkqV3Tfzw";
- const API_URL = "https://example.com/api/v1/results"; // এটি একটি উদাহরণ URL
+// আপনার Supabase URL এবং anon (public) Key এখানে বসান।
+const SUPABASE_URL = "https://wjjhdmjqtvwmhhkuqinw.supabase.co";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndqamhkbWpxdHZ3bWhoa3VxaW53Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTUzODg2ODQsImV4cCI6MjA3MDk2NDY4NH0.-Dy15M98Bsl4iWSxA_MRefXO6EfvZFk1bJZkqV3Tfzw";
 
- // DOMContentLoaded ইভেন্টটি নিশ্চিত করে যে HTML লোড হওয়ার পরেই এই কোডটি কাজ করা শুরু করবে।
- document.addEventListener('DOMContentLoaded', () => {
-     // displayCurrentDate(); // বাংলা তারিখ দেখানো বন্ধ করা হলো
-     fetchTodayResults();
-     fetchOldResults();
-     setupLoginButton();
-     startLiveAnimation();
- });
+// Supabase ক্লায়েন্ট তৈরি করা
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
- // লাইভ অ্যানিমেশন শুরু করার ফাংশন
- function startLiveAnimation() {
-     const liveAnimation = document.querySelector('.today-result .date-header');
-     if (liveAnimation) {
-         liveAnimation.classList.add('live-animation');
-     }
- }
+document.addEventListener('DOMContentLoaded', () => {
+    fetchTodayResults();
+    fetchOldResults();
+    setupLoginButton();
+    startLiveAnimation();
+});
 
- // বর্তমান তারিখ দেখানোর জন্য ফাংশন (বন্ধ করা হয়েছে)
- // function displayCurrentDate() {
- //     const dateElement = document.getElementById('current-date');
- //     if (dateElement) {
- //         const today = new Date();
- //         const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
- //         dateElement.textContent = today.toLocaleDateString('bn-BD', options);
- //     }
- // }
+// লাইভ অ্যানিমেশন শুরু করার ফাংশন
+function startLiveAnimation() {
+    const liveAnimation = document.querySelector('.today-result .date-header');
+    if (liveAnimation) {
+        liveAnimation.classList.add('live-animation');
+    }
+}
 
- // আজকের ফলাফল দেখানোর জন্য ফাংশন (এই ফাংশনে আপনার API কল হবে)
- function fetchTodayResults() {
-     const resultsContainer = document.querySelector('.results-grid');
+// আজকের ফলাফল দেখানোর জন্য ফাংশন
+async function fetchTodayResults() {
+    const resultsContainer = document.querySelector('.results-grid');
+    resultsContainer.innerHTML = '';
+    
+    // আজকের তারিখ বের করা
+    const today = new Date().toISOString().split('T')[0];
 
-     // এখানে আমরা একটি উদাহরণ ডেটা ব্যবহার করছি।
-     // আসল কোডে, আপনি fetch() ব্যবহার করে API থেকে ডেটা নেবেন।
-     const dummyResults = [
-         { patti: '---', single: '-' },
-         { patti: '---', single: '-' },
-         { patti: '---', single: '-' },
-         { patti: '---', single: '-' },
-         { patti: '---', single: '-' },
-         { patti: '---', single: '-' },
-         { patti: '---', single: '-' },
-         { patti: '---', single: '-' }
-     ];
+    // Supabase থেকে আজকের ডেটা লোড করা
+    let { data: results, error } = await supabase
+        .from('results')
+        .select('*')
+        .eq('date', today)
+        .order('slot_id', { ascending: true }); // আপনার কলামের নাম `slot_id` ব্যবহার করা হয়েছে
 
-     resultsContainer.innerHTML = ''; // পুরোনো ডেটা মুছে ফেলা
-     dummyResults.forEach(result => {
-         const resultItem = document.createElement('div');
-         resultItem.className = 'result-box-item';
-         resultItem.innerHTML = `
-             <div class="patti">${result.patti}</div>
-             <div class="single">${result.single}</div>
-         `;
-         resultsContainer.appendChild(resultItem);
-     });
+    if (error) {
+        console.error('আজকের ডেটা লোড করার সময় ভুল হয়েছে:', error);
+        return;
+    }
 
-     console.log('আজকের ফলাফল লোড হয়েছে।');
- }
+    // ডেটা লোড হলে তা প্রদর্শন করা
+    if (results.length > 0) {
+        results.forEach(result => {
+            const resultItem = document.createElement('div');
+            resultItem.className = 'result-box-item';
+            resultItem.innerHTML = `
+                <div class="patti">${result.patti_number}</div>
+                <div class="single">${result.single_number}</div>
+            `; // আপনার কলামের নাম ব্যবহার করা হয়েছে
+            resultsContainer.appendChild(resultItem);
+        });
+    } else {
+        // যদি কোনো ডেটা না থাকে
+        for (let i = 0; i < 8; i++) {
+            const resultItem = document.createElement('div');
+            resultItem.className = 'result-box-item';
+            resultItem.innerHTML = `
+                <div class="patti">---</div>
+                <div class="single">-</div>
+            `;
+            resultsContainer.appendChild(resultItem);
+        }
+    }
 
- // পুরোনো ফলাফল দেখানোর জন্য ফাংশন (এই ফাংশনেও আপনার API কল হবে)
- function fetchOldResults() {
-     const oldResultsContainer = document.querySelector('.old-results-container');
+    console.log('আজকের ফলাফল লোড হয়েছে।');
+}
 
-     // এখানে আমরা উদাহরণ ডেটা ব্যবহার করছি, 15 তারিখের ফলাফল ফাঁকা এবং 16 তারিখের ফলাফল দেওয়া হলো।
-     const dummyOldResults = [
-         { date: '16 Aug 2025', results: [{ patti: '777', single: '1' }, { patti: '550', single: '0' }, { patti: '568', single: '9' }, { patti: '379', single: '9' }, { patti: '114', single: '6' }, { patti: '599', single: '3' }, { patti: '227', single: '1' }, { patti: '570', single: '2' }] },
-         { date: '15 Aug 2025', results: [] }
-     ];
+// পুরোনো ফলাফল দেখানোর জন্য ফাংশন
+async function fetchOldResults() {
+    const oldResultsContainer = document.querySelector('.old-results-container');
+    oldResultsContainer.innerHTML = '';
 
-     oldResultsContainer.innerHTML = '';
-     dummyOldResults.forEach(dayResult => {
-         const dayContainer = document.createElement('div');
-         dayContainer.className = 'old-results-day';
-         dayContainer.innerHTML = `<div class="result-date">${dayResult.date}</div>`;
+    // Supabase থেকে পুরোনো ডেটা লোড করা
+    let { data: results, error } = await supabase
+        .from('results')
+        .select('*')
+        .order('date', { ascending: false });
 
-         const resultsGrid = document.createElement('div');
-         resultsGrid.className = 'results-grid';
+    if (error) {
+        console.error('পুরোনো ডেটা লোড করার সময় ভুল হয়েছে:', error);
+        return;
+    }
+    
+    // ডেটা তারিখ অনুযায়ী গ্রুপ করা
+    const groupedResults = results.reduce((acc, curr) => {
+        const date = curr.date;
+        if (!acc[date]) {
+            acc[date] = [];
+        }
+        acc[date].push(curr);
+        return acc;
+    }, {});
+    
+    // গ্রুপ করা ডেটা প্রদর্শন করা
+    for (const date in groupedResults) {
+        const dayContainer = document.createElement('div');
+        dayContainer.className = 'old-results-day';
+        dayContainer.innerHTML = `<div class="result-date">${date}</div>`;
+        
+        const resultsGrid = document.createElement('div');
+        resultsGrid.className = 'results-grid';
 
-         dayResult.results.forEach(result => {
-             const resultItem = document.createElement('div');
-             resultItem.className = 'result-box-item';
-             resultItem.innerHTML = `
-                 <div class="patti">${result.patti}</div>
-                 <div class="single">${result.single}</div>
-             `;
-             resultsGrid.appendChild(resultItem);
-         });
+        // প্রতিটি দিনের ফলাফল প্রদর্শন
+        groupedResults[date].sort((a, b) => a.slot_id - b.slot_id).forEach(result => {
+            const resultItem = document.createElement('div');
+            resultItem.className = 'result-box-item';
+            resultItem.innerHTML = `
+                <div class="patti">${result.patti_number}</div>
+                <div class="single">${result.single_number}</div>
+            `;
+            resultsGrid.appendChild(resultItem);
+        });
+        
+        dayContainer.appendChild(resultsGrid);
+        oldResultsContainer.appendChild(dayContainer);
+    }
+    
+    console.log('পুরোনো ফলাফল লোড হয়েছে।');
+}
 
-         dayContainer.appendChild(resultsGrid);
-         oldResultsContainer.appendChild(dayContainer);
-     });
-
-     console.log('পুরোনো ফলাফল লোড হয়েছে।');
- }
-
- // লগইন বাটনের জন্য ফাংশন
- function setupLoginButton() {
-     const loginLink = document.getElementById('login-link');
-     if (loginLink) {
-         loginLink.addEventListener('click', (event) => {
-             event.preventDefault(); // লিংকের ডিফল্ট আচরণ বন্ধ করা
-             alert('লগইন পেজে যাচ্ছে...'); // এখানে আপনার লগইন পেজের কোড বা ফাংশনালিটি থাকবে
-         });
-     }
- }
+// লগইন বাটনের জন্য ফাংশন
+function setupLoginButton() {
+    const loginLink = document.getElementById('login-link');
+    if (loginLink) {
+        loginLink.addEventListener('click', (event) => {
+            event.preventDefault();
+            alert('লগইন পেজে যাচ্ছে...');
+        });
+    }
+}
