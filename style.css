@@ -1,151 +1,203 @@
-/* Universal Styles */
+​/* Universal Styles */
 body {
     font-family: Arial, sans-serif;
-    background-color: #2c3e50; /* Dark blue background */
-    color: #ecf0f1; /* Light gray text */
+    background-color: #f0f2f5; /* Light background */
+    color: #333; /* Dark text */
     margin: 0;
     padding: 0;
     line-height: 1.6;
 }
-
-.container {
+​.container {
     max-width: 90%;
     margin: 20px auto;
-    padding: 10px;
-}
-
-h1, h2 {
-    text-align: center;
-    color: #f39c12; /* Orange color */
-}
-
-/* Header Styles */
-.header {
-    background-color: #34495e; /* Slightly darker blue */
     padding: 15px;
+}
+​h1, h2 {
+    text-align: center;
+    color: #007bff; /* Blue primary color */
+    margin-bottom: 20px;
+}
+​/* Header Styles */
+.header {
+    background-color: #fff;
+    padding: 15px;
+    margin-bottom: 20px;
+    border-bottom: 1px solid #ddd;
     display: flex;
     justify-content: space-between;
     align-items: center;
 }
-
-.header h1 {
+​.header h1 {
     margin: 0;
-    font-size: 24px;
+    font-size: 28px;
+    color: #007bff;
 }
-
-.header #login-link {
-    color: #ecf0f1;
+​.header #login-link {
+    color: #555;
     text-decoration: none;
-    font-weight: bold;
-    padding: 8px 12px;
-    border: 1px solid #ecf0f1;
+    padding: 8px 15px;
+    border: 1px solid #ccc;
     border-radius: 5px;
+    font-size: 16px;
 }
-
-/* Today Result Section */
-.today-result, .old-results, .time-schedule {
-    background-color: #34495e;
+​/* Today Result Section */
+.today-result {
+    background-color: #fff;
     padding: 20px;
-    margin-bottom: 20px;
     border-radius: 8px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    margin-bottom: 20px;
 }
-
-.today-result h2 {
+​.today-result h2 {
     margin-top: 0;
-    margin-bottom: 10px;
+    color: #28a745; /* Green accent color */
 }
-
-.today-result .date {
-    text-align: center;
-    font-size: 18px;
-    font-weight: bold;
-}
-
-.live-animation {
-    width: 50px;
-    height: 50px;
-    background-color: #e74c3c; /* Red color */
+​.today-result .live-animation {
+    width: 60px;
+    height: 60px;
+    background-color: #dc3545; /* Red for live */
     border-radius: 50%;
-    margin: 10px auto;
+    margin: 15px auto;
     animation: pulse 1.5s infinite;
 }
-
-@keyframes pulse {
-    0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(231, 76, 60, 0.7); }
-    70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(231, 76, 60, 0); }
-    100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(231, 76, 60, 0); }
+​@keyframes pulse {
+    0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.7); }
+    70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(220, 53, 69, 0); }
+    100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(220, 53, 69, 0); }
 }
-
-.result-box {
-    display: flex;
-    justify-content: space-around;
+​.today-result .date {
     text-align: center;
-    margin-top: 20px;
+    font-size: 18px;
+    color: #555;
+    margin-bottom: 15px;
 }
-
-.patti-number, .single-number {
-    border: 2px solid #f39c12;
-    padding: 15px;
-    border-radius: 8px;
-    width: 45%;
-}
-
-.patti-number span:last-child, .single-number span:last-child {
-    display: block;
-    font-size: 30px;
-    font-weight: bold;
-    margin-top: 5px;
-}
-
-/* Old Results Section */
-.results-container {
+​.today-result .result-box {
     display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
     gap: 10px;
+    text-align: center;
 }
-
-.old-result-item {
-    background-color: #2c3e50;
-    padding: 10px;
+​.today-result .patti-number,
+.today-result .single-number {
+    background-color: #f8f9fa;
+    padding: 15px;
+    border: 1px solid #ddd;
     border-radius: 5px;
 }
-
-.old-result-item p {
-    margin: 0;
-    font-weight: bold;
+​.today-result .patti-number span:first-child,
+.today-result .single-number span:first-child {
+    display: block;
+    color: #777;
+    margin-bottom: 5px;
 }
-
-#show-more-btn {
+​.today-result .patti-number span:last-child,
+.today-result .single-number span:last-child {
+    display: block;
+    font-size: 24px;
+    font-weight: bold;
+    color: #343a40;
+}
+​/* Old Results Section */
+.old-results {
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    margin-bottom: 20px;
+}
+​.old-results h2 {
+    color: #007bff;
+    margin-bottom: 15px;
+}
+​.old-results .results-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 15px;
+}
+​.old-results .result-date {
+    font-weight: bold;
+    color: #555;
+    margin-bottom: 5px;
+}
+​.old-results .old-result-item {
+    background-color: #f8f9fa;
+    padding: 10px;
+    border: 1px solid #eee;
+    border-radius: 5px;
+}
+​.old-results .old-result-item .patti-numbers {
+    display: flex;
+    gap: 5px;
+    margin-bottom: 5px;
+    justify-content: center;
+}
+​.old-results .old-result-item .single-numbers {
+    display: flex;
+    gap: 5px;
+    justify-content: center;
+}
+​.old-results .old-result-item span {
+    display: inline-block;
+    padding: 5px 8px;
+    border: 1px solid #ddd;
+    border-radius: 3px;
+    font-size: 14px;
+}
+​#show-more-btn {
     display: block;
     width: 100%;
-    padding: 10px;
+    padding: 10px 15px;
     margin-top: 20px;
-    background-color: #e74c3c;
+    background-color: #007bff;
     color: white;
     border: none;
     border-radius: 5px;
     cursor: pointer;
     font-size: 16px;
 }
-
-/* Time Schedule Section */
-.time-schedule table {
+​/* Time Schedule Section */
+.time-schedule {
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    margin-bottom: 20px;
+}
+​.time-schedule h2 {
+    color: #ffc107; /* Yellow accent color */
+    margin-bottom: 15px;
+}
+​.time-schedule table {
     width: 100%;
     border-collapse: collapse;
     margin-top: 15px;
 }
-
-.time-schedule th, .time-schedule td {
-    border: 1px solid #4a6c8b;
+​.time-schedule th, .time-schedule td {
+    border: 1px solid #dee2e6;
     padding: 12px;
     text-align: center;
 }
-
-.time-schedule th {
-    background-color: #f39c12;
-    color: #2c3e50;
+​.time-schedule th {
+    background-color: #ffc107;
+    color: #212529;
 }
-
-.time-schedule tr:nth-child(even) {
-    background-color: #34495e;
+​.time-schedule tbody tr:nth-child(even) {
+    background-color: #f8f9fa;
+}
+​/* Mobile Responsive */
+@media (max-width: 768px) {
+    .container {
+        max-width: 95%;
+    }
+​.today-result .result-box {
+        grid-template-columns: 1fr;
+    }
+​.today-result .patti-number,
+    .today-result .single-number {
+        width: 100%;
+        margin-bottom: 10px;
+    }
+​.old-results .results-container {
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    }
 }
