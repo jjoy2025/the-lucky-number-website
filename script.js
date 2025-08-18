@@ -538,6 +538,7 @@ async function setupDealerDashboard() {
             return;
         }
 
+        // --- UPDATED CODE FOR INSERTS TO PLAYS TABLE ---
         const { error: playError } = await supabase
             .from('plays')
             .insert([{ 
