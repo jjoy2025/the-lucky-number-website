@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="bn">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -12,7 +12,6 @@
 <body>
 
     <header class="header">
-        <h1>এডমিন প্যানেল</h1>
         <div class="header-right">
             <button id="logout-btn" style="display:none;">Logout</button>
         </div>
@@ -21,37 +20,37 @@
     <main class="container">
         
         <section id="login-section" class="admin-section">
-            <h2>লগইন</h2>
+            <h2>Login</h2>
             <form id="common-login-form">
-                <label for="email-input">নাম/ইমেইল:</label>
+                <label for="email-input">Name/Email:</label>
                 <input type="text" id="email-input" required>
-                <label for="password-input">পাসওয়ার্ড:</label>
+                <label for="password-input">Password:</label>
                 <input type="password" id="password-input" required>
-                <button type="submit">লগইন করুন</button>
+                <button type="submit">Login</button>
                 <p id="auth-error" class="error-message"></p>
             </form>
         </section>
 
         <div id="data-entry-section" class="admin-panel" style="display:none;">
             <div class="tabs">
-                <button class="tab-button active" data-tab="results-tab">ফলাফল আপডেট</button>
-                <button class="tab-button" data-tab="dealers-tab">ডিলার ম্যানেজ</button>
-                <button class="tab-button" data-tab="reports-tab">রিপোর্ট</button>
+                <button class="tab-button active" data-tab="results-tab">Update Results</button>
+                <button class="tab-button" data-tab="dealers-tab">Manage Dealers</button>
+                <button class="tab-button" data-tab="reports-tab">Reports</button>
             </div>
 
             <div id="results-tab" class="tab-content active">
                 <section class="admin-section">
-                    <h2>ফলাফল আপডেট করুন</h2>
+                    <h2>Update Results</h2>
                     <form id="result-form">
-                        <label for="date-input">তারিখ:</label>
+                        <label for="date-input">Date:</label>
                         <input type="date" id="date-input" required>
-                        <label for="baji-input">বাজি:</label>
-                        <input type="number" id="baji-input" min="1" max="8" required>
-                        <label for="patti-input">পাত্তি:</label>
+                        <label for="baji-select">Baji:</label>
+                        <select id="baji-select" required></select>
+                        <label for="patti-input">Patti:</label>
                         <input type="text" id="patti-input" required>
-                        <label for="single-input">সিঙ্গেল:</label>
+                        <label for="single-input">Single:</label>
                         <input type="number" id="single-input" min="0" max="9" required>
-                        <button type="submit">আপডেট করুন</button>
+                        <button type="submit">Update</button>
                         <p id="result-message"></p>
                     </form>
                 </section>
@@ -59,27 +58,27 @@
 
             <div id="dealers-tab" class="tab-content">
                 <section class="admin-section">
-                    <h2>ডিলার যুক্ত করুন</h2>
+                    <h2>Add Dealer</h2>
                     <form id="dealer-form">
-                        <label for="dealer-name">নাম:</label>
+                        <label for="dealer-name">Name:</label>
                         <input type="text" id="dealer-name" required>
-                        <label for="dealer-phone">ফোন নম্বর:</label>
+                        <label for="dealer-phone">Phone Number:</label>
                         <input type="text" id="dealer-phone" required>
-                        <label for="dealer-password">পাসওয়ার্ড:</label>
+                        <label for="dealer-password">Password:</label>
                         <input type="password" id="dealer-password" required>
-                        <button type="submit">ডিলার যুক্ত করুন</button>
+                        <button type="submit">Add Dealer</button>
                         <p id="dealer-message"></p>
                     </form>
                 </section>
 
                 <section class="admin-section">
-                    <h2>টোকেন ট্রান্সফার করুন</h2>
+                    <h2>Transfer Tokens</h2>
                     <form id="token-transfer-form">
-                        <label for="dealer-select">ডিলার:</label>
+                        <label for="dealer-select">Dealer:</label>
                         <select id="dealer-select" required></select>
-                        <label for="token-amount">টোকেন পরিমাণ:</label>
+                        <label for="token-amount">Token Amount:</label>
                         <input type="number" id="token-amount" min="1" required>
-                        <button type="submit">টোকেন ট্রান্সফার করুন</button>
+                        <button type="submit">Transfer Tokens</button>
                         <p id="token-message"></p>
                     </form>
                 </section>
@@ -87,14 +86,14 @@
 
             <div id="reports-tab" class="tab-content">
                 <section class="admin-section">
-                    <h2>রিপোর্ট এবং গ্রাফ</h2>
+                    <h2>Reports & Graph</h2>
                     <form id="report-form">
-                        <label for="report-dealer-select">ডিলার:</label>
+                        <label for="report-dealer-select">Dealer:</label>
                         <select id="report-dealer-select"></select>
-                        <label for="report-date-input">তারিখ:</label>
+                        <label for="report-date-input">Date:</label>
                         <input type="date" id="report-date-input" required>
-                        <button type="button" id="showReportBtn">রিপোর্ট দেখুন</button>
-                        <button type="button" id="showGraphBtn">গ্রাফ দেখুন</button>
+                        <button type="button" id="showReportBtn">View Report</button>
+                        <button type="button" id="showGraphBtn">View Graph</button>
                     </form>
                 </section>
                 <div id="reportContainer" class="admin-section"></div>
