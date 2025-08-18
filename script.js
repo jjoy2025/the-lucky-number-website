@@ -22,7 +22,7 @@ function setupPublicWebsite() {
     fetchOldResults();
     setupLoginButton();
     startLiveAnimation();
-    
+
     // Add realtime subscription.
     supabase.channel('results_changes')
         .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'results' }, (payload) => {
@@ -87,11 +87,11 @@ async function setupAdminPanel() {
         button.addEventListener('click', () => {
             tabButtons.forEach(btn => btn.classList.remove('active'));
             tabContents.forEach(content => content.classList.remove('active'));
-            
+
             button.classList.add('active');
             const tabId = button.dataset.tab;
             document.getElementById(tabId).classList.add('active');
-            
+
             if (myChartInstance) {
                 myChartInstance.destroy();
                 myChartInstance = null;
@@ -160,7 +160,7 @@ async function setupAdminPanel() {
         const { data, error } = await supabase
             .from('dealers')
             .insert([{ name: name, phone_number: phone, password: password, token_balance: 0 }]);
-        
+
         if (error) {
             dealerMessage.textContent = 'Failed to add dealer: ' + error.message;
             dealerMessage.style.color = 'red';
@@ -173,6 +173,7 @@ async function setupAdminPanel() {
         }
     });
 
+    // --- UPDATED CODE FOR TOKEN TRANSFER ---
     tokenTransferForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         const dealerId = document.getElementById('dealer-select').value;
@@ -183,38 +184,25 @@ async function setupAdminPanel() {
             tokenMessage.style.color = 'red';
             return;
         }
-        
-        const { data: dealer, error: fetchError } = await supabase
-            .from('dealers')
-            .select('token_balance')
-            .eq('id', dealerId)
-            .single();
 
-        if (fetchError) {
-            tokenMessage.textContent = 'Failed to fetch dealer balance: ' + fetchError.message;
-            tokenMessage.style.color = 'red';
-            return;
-        }
-
-        const newBalance = dealer.token_balance + amount;
-        
+        // Call the Supabase database function to safely increment the balance
         const { data: updateData, error: updateError } = await supabase
-            .from('dealers')
-            .update({ token_balance: newBalance })
-            .eq('id', dealerId);
+            .rpc('increment_token_balance', { dealer_id: dealerId, amount: amount });
 
         if (updateError) {
             tokenMessage.textContent = 'Failed to transfer tokens: ' + updateError.message;
             tokenMessage.style.color = 'red';
+            console.error('Database function call failed:', updateError);
         } else {
+            // Log the transaction after the balance is successfully updated
             const { data: transactionData, error: transactionError } = await supabase
                 .from('transactions')
                 .insert([{ sender_id: session.user.id, receiver_id: dealerId, amount: amount, type: 'credit' }]);
-            
+
             if (transactionError) {
-                console.error('Failed to log transaction: ' + transactionError.message);
+                console.error('Failed to log transaction:', transactionError.message);
             }
-            
+
             tokenMessage.textContent = 'Tokens transferred successfully!';
             tokenMessage.style.color = 'green';
             tokenTransferForm.reset();
@@ -227,12 +215,12 @@ async function setupAdminPanel() {
         const { data: dealers, error } = await supabase
             .from('dealers')
             .select('*');
-        
+
         if (error) {
             console.error('Failed to load dealers:', error.message);
             return;
         }
-        
+
         dealerSelect.innerHTML = '<option value="">Select Dealer</option>';
         dealers.forEach(dealer => {
             const option = document.createElement('option');
@@ -246,12 +234,12 @@ async function setupAdminPanel() {
         const { data: dealers, error } = await supabase
             .from('dealers')
             .select('id, name');
-        
+
         if (error) {
             console.error('Failed to load dealers for report:', error.message);
             return;
         }
-        
+
         reportDealerSelect.innerHTML = '<option value="">Select Dealer</option>';
         dealers.forEach(dealer => {
             const option = document.createElement('option');
@@ -296,21 +284,21 @@ async function setupAdminPanel() {
             .from('results')
             .select('*')
             .eq('date', reportDate);
-            
+
         reportContainer.innerHTML = `<h2>Report for ${reportDate}</h2>`;
         reportContainer.innerHTML += '<table border="1" style="width:100%; text-align:center;">';
         reportContainer.innerHTML += '<thead><tr><th>Time</th><th>Played Numbers</th><th>Winning Number</th><th>Spent</th><th>Prize</th><th>Profit/Loss</th></tr></thead>';
         reportContainer.innerHTML += '<tbody>';
-        
+
         let totalSpent = 0;
         let totalPrize = 0;
 
         plays.forEach(play => {
             const result = results.find(r => r.slot_id === play.baji_slot);
             const winningNumber = result ? result.single_number : '-';
-            
+
             const playedNumbers = Object.keys(play.played_numbers).map(num => `${num}(${play.played_numbers[num]})`).join(', ');
-            
+
             const prizeTokens = (winningNumber !== '-' && play.played_numbers[winningNumber]) ? play.played_numbers[winningNumber] * 90 : 0;
             const profitLoss = prizeTokens - play.total_spent_tokens;
 
@@ -328,7 +316,7 @@ async function setupAdminPanel() {
                 </tr>
             `;
         });
-        
+
         reportContainer.innerHTML += `
             <tr>
                 <td colspan="3">Total</td>
@@ -352,7 +340,7 @@ async function setupAdminPanel() {
             if (myChartInstance) myChartInstance.destroy();
             return;
         }
-        
+
         const tokenData = {};
         plays.forEach(play => {
             for (const number in play.played_numbers) {
@@ -395,7 +383,7 @@ async function setupAdminPanel() {
         });
         reportContainer.innerHTML = '';
     }
-    
+
     logoutBtn.addEventListener('click', async () => {
         const { error } = await supabase.auth.signOut();
         window.location.reload();
@@ -407,7 +395,7 @@ async function setupAdminPanel() {
 async function setupDealerDashboard() {
     const urlParams = new URLSearchParams(window.location.search);
     const dealerId = urlParams.get('dealerId');
-    
+
     const dealerNameDisplay = document.getElementById('dealer-name-display');
     const tokenBalanceDisplay = document.getElementById('current-token-balance');
     const logoutBtn = document.getElementById('logout-btn');
@@ -429,18 +417,18 @@ async function setupDealerDashboard() {
         .select('name')
         .eq('id', dealerId)
         .single();
-    
+
     if (dealerData) {
         dealerNameDisplay.textContent = `Welcome, ${dealerData.name}!`;
     } else {
         dealerNameDisplay.textContent = `Welcome!`;
         console.error('Failed to fetch dealer name:', dealerError.message);
     }
-    
+
     logoutBtn.addEventListener('click', () => {
         window.location.href = 'admin.html';
     });
-    
+
     async function updateDealerBalance() {
         const { data, error } = await supabase
             .from('dealers')
@@ -485,7 +473,7 @@ async function setupDealerDashboard() {
             bettingClosedMessage.style.display = 'block';
         }
     }
-    
+
     bettingForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         const baji = parseInt(bajiSelect.value);
@@ -503,13 +491,13 @@ async function setupDealerDashboard() {
             .select('token_balance')
             .eq('id', dealerId)
             .single();
-        
+
         if (fetchError || dealer.token_balance < amount) {
             betMessage.textContent = 'You do not have enough tokens.';
             betMessage.style.color = 'red';
             return;
         }
-        
+
         const newBalance = dealer.token_balance - amount;
 
         const { error: updateError } = await supabase
@@ -579,7 +567,7 @@ async function setupDealerDashboard() {
             const prize = won ? (betAmount * 90) : 0;
             const statusColor = won ? 'green' : 'red';
             const statusText = won ? 'Congratulations, you won!' : 'Sorry, you lost.';
-            
+
             slip.innerHTML = `
                 <h3>${play.baji_slot}th Baji - ${play.play_time}</h3>
                 <p><strong>Your Number:</strong> ${playedNumber} (Tokens: ${betAmount})</p>
@@ -594,7 +582,7 @@ async function setupDealerDashboard() {
     updateDealerBalance();
     setupBajiSchedule();
     fetchAndDisplaySlips(dealerId);
-    
+
     setInterval(() => {
         updateDealerBalance();
         fetchAndDisplaySlips(dealerId);
