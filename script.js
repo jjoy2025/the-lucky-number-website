@@ -15,6 +15,14 @@ document.addEventListener('DOMContentLoaded', () => {
         fetchOldResults();
         setupLoginButton();
         startLiveAnimation();
+        
+        // রিয়েলটাইম সাবস্ক্রিপশন যোগ করুন
+        supabase.channel('results_changes')
+            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'results' }, (payload) => {
+                console.log('New result added:', payload.new);
+                fetchTodayResults();
+            })
+            .subscribe();
     }
 });
 
@@ -111,29 +119,14 @@ function setupAdminPanel() {
         e.preventDefault();
         const name = document.getElementById('dealer-name').value;
         const phone = document.getElementById('dealer-phone').value;
-        const email = document.getElementById('dealer-email').value;
         const password = document.getElementById('dealer-password').value;
-
-        const { user, error: authError } = await supabase.auth.signUp({
-            email: email,
-            password: password,
-            options: {
-                data: { role: 'dealer' }
-            }
-        });
-
-        if (authError) {
-            dealerMessage.textContent = 'Failed to create dealer user: ' + authError.message;
-            dealerMessage.style.color = 'red';
-            return;
-        }
 
         const { data, error } = await supabase
             .from('dealers')
-            .insert([{ user_id: user.id, name, phone_number: phone, token_balance: 0 }]);
+            .insert([{ name: name, phone_number: phone, password: password, token_balance: 0 }]);
         
         if (error) {
-            dealerMessage.textContent = 'Failed to add dealer to database: ' + error.message;
+            dealerMessage.textContent = 'Failed to add dealer: ' + error.message;
             dealerMessage.style.color = 'red';
         } else {
             dealerMessage.textContent = 'Dealer added successfully!';
@@ -243,12 +236,11 @@ function setupAdminPanel() {
     });
 
     showGraphBtn.addEventListener('click', () => {
-        const dealerId = reportDealerSelect.value;
         const reportDate = reportDateInput.value;
-        if (dealerId && reportDate) {
-            fetchAndDisplayGraph(dealerId, reportDate);
+        if (reportDate) {
+            fetchAndDisplayGraph(reportDate);
         } else {
-            alert("অনুগ্রহ করে ডিলার এবং তারিখ সিলেক্ট করুন।");
+            alert("অনুগ্রহ করে তারিখ সিলেক্ট করুন।");
         }
     });
 
@@ -313,11 +305,10 @@ function setupAdminPanel() {
         graphContainer.innerHTML = '';
     }
 
-    async function fetchAndDisplayGraph(dealerId, reportDate) {
+    async function fetchAndDisplayGraph(reportDate) {
         const { data: plays, error } = await supabase
             .from('plays')
             .select('played_numbers')
-            .eq('dealer_id', dealerId)
             .eq('play_date', reportDate);
 
         if (error || !plays || plays.length === 0) {
