@@ -1,6 +1,6 @@
 // Your Supabase URL and anon (public) Key go here.
-const SUPABASE_URL = "https://urjcuxavrkyqttwtqvjx.supabase.co";
-const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVyamN1eGF2cmt5cXR0d3Rxdmp4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU0MDI5NDIsImV4cCI6MjA3MDk3ODk0Mn0._HzIlEtRtwnsssFGonEqrHcqBm9WtXAx7bWa6S-9ErQ";
+const SUPABASE_URL = "https://urjcuxavrkyqttwtqvjx.supabase.co"; // Replace with your actual Supabase URL
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVyamN1eGF2cmt5cXR0d3Rxdmp4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU0MDI5NDIsImV4cCI6MjA3MDk3ODk0Mn0._HzIlEtRtwnsssFGonEqrHcqBm9WtXAx7bWa6S-9ErQ"; // Replace with your actual anon key
 
 // Supabase library is loaded directly.
 const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -99,6 +99,7 @@ async function setupAdminPanel() {
         });
     });
 
+    // --- UPDATED LOGIC FOR LOGIN ---
     loginForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         const nameOrEmail = document.getElementById('email-input').value;
@@ -114,14 +115,16 @@ async function setupAdminPanel() {
         if (adminAuthData.session) {
             window.location.reload();
         } else {
-            // Try to log in as a dealer using Supabase Auth.
-            const { data: dealerAuthData, error: dealerAuthError } = await supabase.auth.signInWithPassword({
-                email: nameOrEmail,
-                password: password,
-            });
+            // Try to log in as a dealer using custom database query
+            const { data: dealerData, error: dealerError } = await supabase
+                .from('dealers')
+                .select('*')
+                .eq('name', nameOrEmail)
+                .eq('password', password)
+                .single();
 
-            if (dealerAuthData.session) {
-                window.location.href = `dealer-dashboard.html`;
+            if (dealerData) {
+                window.location.href = `dealer-dashboard.html?dealerId=${dealerData.id}`;
             } else {
                 authError.textContent = 'Login failed. Please enter the correct name/email and password.';
             }
@@ -405,14 +408,14 @@ async function setupAdminPanel() {
 
 // --- Functions for Dealer Dashboard ---
 async function setupDealerDashboard() {
-    const { data: { user }, error: authError } = await supabase.auth.getSession();
+    const urlParams = new URLSearchParams(window.location.search);
+    const dealerId = urlParams.get('dealerId');
     
-    if (!user) {
-        window.location.href = 'admin.html'; // Redirect to login page if no user is logged in
+    if (!dealerId) {
+        window.location.href = 'admin.html';
         return;
     }
-    const dealerId = user.id;
-
+    
     const dealerNameDisplay = document.getElementById('dealer-name-display');
     const tokenBalanceDisplay = document.getElementById('current-token-balance');
     const logoutBtn = document.getElementById('logout-btn');
