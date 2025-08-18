@@ -152,38 +152,27 @@ async function setupAdminPanel() {
         }
     });
 
+    // --- UPDATED LOGIC FOR ADDING DEALER ---
     dealerForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         const name = document.getElementById('dealer-name').value;
         const phone = document.getElementById('dealer-phone').value;
         const password = document.getElementById('dealer-password').value;
+        dealerMessage.textContent = ''; // Clear previous messages
 
-        // Create a new user in Supabase Auth
-        const { data: authData, error: authError } = await supabase.auth.signUp({
-            email: name, // Using name as email for simplicity
-            password: password,
-        });
-
-        if (authError) {
-            dealerMessage.textContent = 'Failed to add dealer (auth): ' + authError.message;
-            dealerMessage.style.color = 'red';
-            return;
-        }
-
-        // Add the dealer to the 'dealers' table with the new user's UUID
+        // Directly insert the dealer into the 'dealers' table without using Supabase Auth
         const { data, error } = await supabase
             .from('dealers')
-            .insert([{ id: authData.user.id, name: name, phone_number: phone, password: password, token_balance: 0 }]);
+            .insert([{ name: name, phone_number: phone, password: password, token_balance: 0 }]);
         
         if (error) {
-            dealerMessage.textContent = 'Failed to add dealer (db): ' + error.message;
+            dealerMessage.textContent = 'Failed to add dealer: ' + error.message;
             dealerMessage.style.color = 'red';
-            // You might want to rollback the auth user creation here if this fails
         } else {
             dealerMessage.textContent = 'Dealer added successfully!';
             dealerMessage.style.color = 'green';
             dealerForm.reset();
-            await populateDealers();
+            await populateDealers(); // This function will update the dealer list
             await populateDealerReportSelect();
         }
     });
