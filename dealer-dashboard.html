@@ -1,52 +1,45 @@
 <!DOCTYPE html>
-<html lang="bn">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>The Lucky Number - Dealer Dashboard</title>
+    <title>Dealer Dashboard</title>
     <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="admin.css"> <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="admin.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
-
     <header class="header">
-        <h1>ডিলার ড্যাশবোর্ড</h1>
+        <h1 id="dealer-name-display"></h1>
         <div class="header-right">
-            <span id="dealer-name-display" style="font-weight: bold; margin-right: 10px;"></span>
+            <span id="current-token-balance"></span>
             <button id="logout-btn">Logout</button>
         </div>
     </header>
 
     <main class="container">
         
-        <div class="admin-section">
-            <h2 id="current-token-balance"></h2>
-        </div>
-
-        <div id="betting-section" class="admin-section">
-            <h2>বেট করুন</h2>
-            <p id="betting-closed-message" style="display:none; color: red; text-align: center;">এই খেলার জন্য বেটিং বন্ধ আছে। পরবর্তী খেলার জন্য অপেক্ষা করুন।</p>
+        <section class="admin-section" id="betting-form-section">
+            <h2>Place Your Bet</h2>
             <form id="betting-form">
-                <div id="baji-select-container">
-                    <label for="baji-select">কোন বাজি:</label>
-                    <select id="baji-select" required></select>
-                </div>
-                <label for="bet-number">নম্বর (0-9):</label>
+                <label for="baji-select">Select Baji:</label>
+                <select id="baji-select" required></select>
+                <label for="bet-number">Number (0-9):</label>
                 <input type="number" id="bet-number" min="0" max="9" required>
-                <label for="bet-amount">টোকেন:</label>
-                <input type="number" id="bet-amount" required>
-                <button type="submit" id="place-bet-btn">বেট করুন</button>
+                <label for="bet-amount">Tokens:</label>
+                <input type="number" id="bet-amount" min="1" required>
+                <button type="submit">Place Bet</button>
+                <p id="bet-message"></p>
             </form>
-            <p id="bet-message" class="success-message"></p>
-        </div>
+            <p id="betting-closed-message" style="display: none; color: red; font-weight: bold; text-align: center;">Betting is closed for today.</p>
+        </section>
 
-        <div id="dealer-slips-section" class="admin-section">
-            <h2>আপনার স্লিপস</h2>
+        <section class="admin-section">
+            <h2>Today's Slips</h2>
             <div id="slips-container">
-                <p style="text-align: center;">এখানে আপনার স্লিপগুলো দেখা যাবে।</p>
+                <p style="text-align: center;">Loading...</p>
             </div>
-        </div>
+        </section>
 
     </main>
     <script src="script.js"></script>
