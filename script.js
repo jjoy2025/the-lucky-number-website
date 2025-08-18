@@ -431,24 +431,22 @@ function setupDealerDashboard() {
     // বাজি সিলেক্ট অপশন পপুলেট করা এবং বেটিং বন্ধ করার লজিক
     async function setupBajiSchedule() {
         const bajiSlots = [
-            { id: 1, time: '11:00 AM' },
-            { id: 2, time: '12:30 PM' },
-            { id: 3, time: '2:00 PM' },
-            { id: 4, time: '3:30 PM' },
-            { id: 5, time: '5:00 PM' },
-            { id: 6, time: '6:30 PM' },
-            { id: 7, time: '8:00 PM' },
-            { id: 8, time: '9:00 PM' }
+            { id: 1, time: '11:00 AM', hour: 11, minute: 0 },
+            { id: 2, time: '12:30 PM', hour: 12, minute: 30 },
+            { id: 3, time: '2:00 PM', hour: 14, minute: 0 },
+            { id: 4, time: '3:30 PM', hour: 15, minute: 30 },
+            { id: 5, time: '5:00 PM', hour: 17, minute: 0 },
+            { id: 6, time: '6:30 PM', hour: 18, minute: 30 },
+            { id: 7, time: '8:00 PM', hour: 20, minute: 0 },
+            { id: 8, time: '9:00 PM', hour: 21, minute: 0 }
         ];
 
-        bajiSelect.innerHTML = '<option value="">একটি বাজি সিলেক্ট করুন</option>';
-
+        bajiSelect.innerHTML = '';
         const now = new Date();
         const nextBaji = bajiSlots.find(baji => {
-            const [hours, minutes] = baji.time.split(/:| /).map(Number);
-            const bajiTime = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hours, minutes);
-            const minutesUntilBaji = (bajiTime - now) / (1000 * 60);
-            return minutesUntilBaji > 20; // খেলা শুরু হওয়ার 20 মিনিট আগে বেটিং বন্ধ
+            const bajiTime = new Date(now.getFullYear(), now.getMonth(), now.getDate(), baji.hour, baji.minute);
+            const timeDifference = (bajiTime.getTime() - now.getTime()) / (1000 * 60);
+            return timeDifference > 20;
         });
 
         if (nextBaji) {
@@ -468,6 +466,12 @@ function setupDealerDashboard() {
         const baji = parseInt(bajiSelect.value);
         const number = parseInt(betNumberInput.value);
         const amount = parseInt(betAmountInput.value);
+
+        if (isNaN(number) || number < 0 || number > 9 || isNaN(amount) || amount <= 0) {
+            betMessage.textContent = 'অনুগ্রহ করে সঠিক নম্বর (0-9) এবং পরিমাণ লিখুন।';
+            betMessage.style.color = 'red';
+            return;
+        }
 
         const { data: dealer, error: fetchError } = await supabase
             .from('dealers')
@@ -678,4 +682,3 @@ function startLiveAnimation() {
     const dateHeader = document.querySelector('.today-result .date-header');
     dateHeader.classList.add('live-animation');
 }
-
