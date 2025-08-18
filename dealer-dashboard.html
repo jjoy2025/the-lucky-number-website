@@ -43,27 +43,5 @@
 
     </main>
     <script src="script.js"></script>
-    <script>
-        // This script ensures the balance is updated immediately after the page loads
-        document.addEventListener('DOMContentLoaded', async () => {
-            const urlParams = new URLSearchParams(window.location.search);
-            const dealerId = urlParams.get('dealerId');
-
-            if (dealerId) {
-                // Fetch and display balance on page load
-                await updateDealerBalance();
-            }
-        });
-        
-        // This function will continuously update the balance and slips
-        setInterval(async () => {
-            const urlParams = new URLSearchParams(window.location.search);
-            const dealerId = urlParams.get('dealerId');
-            if (dealerId) {
-                await updateDealerBalance();
-                await fetchAndDisplaySlips(dealerId);
-            }
-        }, 5000); // Updates every 5 seconds
-    </script>
 </body>
 </html>
