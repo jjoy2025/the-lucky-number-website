@@ -2,25 +2,24 @@
 <html lang="bn">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>The Lucky Number</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
 
     <header class="header">
-        <h1>The Lucky Number</h1>
-        <a href="admin.html" id="login-link">Login</a>
+        <h1>দ্য লাকি নাম্বার</h1>
+        <div class="header-right">
+            <a href="admin.html" id="login-link">Login</a>
+        </div>
     </header>
 
     <main class="container">
 
         <section class="today-result">
-            <h2>Today Result</h2>
-            <div class="date-header">
-                <span id="current-date"></span>
-            </div>
+            <h2 class="date-header">আজকের ফলাফল <span id="current-date"></span></h2>
             <div class="results-grid">
                 <div class="result-box-item">
                     <div class="patti">- - -</div>
@@ -58,31 +57,10 @@
         </section>
 
         <section class="old-results">
-            <h2>Old Results</h2>
+            <h2>পুরোনো ফলাফল</h2>
             <div class="old-results-container">
-                </div>
-        </section>
-
-        <section class="time-schedule">
-            <h2>Result Time Schedule</h2>
-            <table>
-                <thead>
-                    <tr>
-                        <th>BAJI</th>
-                        <th>RESULT TIME</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr><td>1st Baji</td><td>11:00 AM</td></tr>
-                    <tr><td>2nd Baji</td><td>12:30 PM</td></tr>
-                    <tr><td>3rd Baji</td><td>2:00 PM</td></tr>
-                    <tr><td>4th Baji</td><td>3:30 PM</td></tr>
-                    <tr><td>5th Baji</td><td>5:00 PM</td></tr>
-                    <tr><td>6th Baji</td><td>6:30 PM</td></tr>
-                    <tr><td>7th Baji</td><td>8:00 PM</td></tr>
-                    <tr><td>8th Baji</td><td>9:00 PM</td></tr>
-                </tbody>
-            </table>
+                <p>লোডিং... পুরোনো ফলাফল</p>
+            </div>
         </section>
 
     </main>
