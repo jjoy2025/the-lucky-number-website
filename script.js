@@ -114,16 +114,14 @@ async function setupAdminPanel() {
         if (adminAuthData.session) {
             window.location.reload();
         } else {
-            // If admin login fails, try to log in as a dealer.
-            const { data: dealerData, error: dealerError } = await supabase
-                .from('dealers')
-                .select('*')
-                .eq('name', nameOrEmail)
-                .eq('password', password)
-                .single();
+            // Try to log in as a dealer using Supabase Auth.
+            const { data: dealerAuthData, error: dealerAuthError } = await supabase.auth.signInWithPassword({
+                email: nameOrEmail,
+                password: password,
+            });
 
-            if (dealerData) {
-                window.location.href = `dealer-dashboard.html?dealerId=${dealerData.id}`;
+            if (dealerAuthData.session) {
+                window.location.href = `dealer-dashboard.html`;
             } else {
                 authError.textContent = 'Login failed. Please enter the correct name/email and password.';
             }
@@ -157,13 +155,27 @@ async function setupAdminPanel() {
         const phone = document.getElementById('dealer-phone').value;
         const password = document.getElementById('dealer-password').value;
 
+        // Create a new user in Supabase Auth
+        const { data: authData, error: authError } = await supabase.auth.signUp({
+            email: name, // Using name as email for simplicity
+            password: password,
+        });
+
+        if (authError) {
+            dealerMessage.textContent = 'Failed to add dealer (auth): ' + authError.message;
+            dealerMessage.style.color = 'red';
+            return;
+        }
+
+        // Add the dealer to the 'dealers' table with the new user's UUID
         const { data, error } = await supabase
             .from('dealers')
-            .insert([{ name: name, phone_number: phone, password: password, token_balance: 0 }]);
+            .insert([{ id: authData.user.id, name: name, phone_number: phone, password: password, token_balance: 0 }]);
         
         if (error) {
-            dealerMessage.textContent = 'Failed to add dealer: ' + error.message;
+            dealerMessage.textContent = 'Failed to add dealer (db): ' + error.message;
             dealerMessage.style.color = 'red';
+            // You might want to rollback the auth user creation here if this fails
         } else {
             dealerMessage.textContent = 'Dealer added successfully!';
             dealerMessage.style.color = 'green';
@@ -393,9 +405,14 @@ async function setupAdminPanel() {
 
 // --- Functions for Dealer Dashboard ---
 async function setupDealerDashboard() {
-    const urlParams = new URLSearchParams(window.location.search);
-    const dealerId = urlParams.get('dealerId');
+    const { data: { user }, error: authError } = await supabase.auth.getSession();
     
+    if (!user) {
+        window.location.href = 'admin.html'; // Redirect to login page if no user is logged in
+        return;
+    }
+    const dealerId = user.id;
+
     const dealerNameDisplay = document.getElementById('dealer-name-display');
     const tokenBalanceDisplay = document.getElementById('current-token-balance');
     const logoutBtn = document.getElementById('logout-btn');
@@ -406,11 +423,6 @@ async function setupDealerDashboard() {
     const slipsContainer = document.getElementById('slips-container');
     const bajiSelect = document.getElementById('baji-select');
     const bettingClosedMessage = document.getElementById('betting-closed-message');
-
-    if (!dealerId) {
-        window.location.href = 'admin.html'; // Redirect to login page if dealerId is not in URL
-        return;
-    }
 
     const { data: dealerData, error: dealerError } = await supabase
         .from('dealers')
@@ -425,7 +437,8 @@ async function setupDealerDashboard() {
         console.error('Failed to fetch dealer name:', dealerError.message);
     }
     
-    logoutBtn.addEventListener('click', () => {
+    logoutBtn.addEventListener('click', async () => {
+        const { error } = await supabase.auth.signOut();
         window.location.href = 'admin.html';
     });
     
@@ -609,7 +622,7 @@ async function setupDealerDashboard() {
         updateDealerBalance();
         fetchAndDisplaySlips(dealerId);
         setupBajiSchedule(); // To update betting status in real-time
-    }, 10000);
+    }, 5000);
 }
 
 // --- Common Functions for Both Panels ---
@@ -713,3 +726,4 @@ function startLiveAnimation() {
     const dateHeader = document.querySelector('.today-result .date-header');
     dateHeader.classList.add('live-animation');
 }
+
