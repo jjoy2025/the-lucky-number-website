@@ -1,12 +1,12 @@
-// আপনার Supabase URL এবং anon (public) Key এখানে বসান।
+// Your Supabase URL and anon (public) Key go here.
 const SUPABASE_URL = "https://urjcuxavrkyqttwtqvjx.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVyamN1eGF2cmt5cXR0d3Rxdmp4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU0MDI5NDIsImV4cCI6MjA3MDk3ODk0Mn0._HzIlEtRtwnsssFGonEqrHcqBm9WtXAx7bWa6S-9ErQ";
 
-// Supabase লাইব্রেরি সরাসরি লোড করা হচ্ছে
+// Supabase library is loaded directly.
 const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 document.addEventListener('DOMContentLoaded', () => {
-    // URL অনুযায়ী ফাংশন লোড করা
+    // Load functions based on URL.
     if (window.location.pathname.endsWith('admin.html')) {
         setupAdminPanel();
     } else if (window.location.pathname.endsWith('dealer-dashboard.html')) {
@@ -16,14 +16,14 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-// --- পাবলিক ওয়েবসাইটের জন্য ফাংশন ---
+// --- Functions for Public Website ---
 function setupPublicWebsite() {
     fetchTodayResults();
     fetchOldResults();
     setupLoginButton();
     startLiveAnimation();
     
-    // রিয়েলটাইম সাবস্ক্রিপশন যোগ করুন
+    // Add realtime subscription.
     supabase.channel('results_changes')
         .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'results' }, (payload) => {
             console.log('New result added:', payload.new);
@@ -32,23 +32,24 @@ function setupPublicWebsite() {
         .subscribe();
 }
 
-// --- এডমিন প্যানেলের জন্য ফাংশন ---
-function setupAdminPanel() {
+// --- Functions for Admin Panel ---
+async function setupAdminPanel() {
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
     const loginForm = document.getElementById('common-login-form');
+    const loginSection = document.getElementById('login-section');
+    const dataEntrySection = document.getElementById('data-entry-section');
+    const logoutBtn = document.getElementById('logout-btn');
+    const authError = document.getElementById('auth-error');
     const resultForm = document.getElementById('result-form');
     const dealerForm = document.getElementById('dealer-form');
     const tokenTransferForm = document.getElementById('token-transfer-form');
-    const logoutBtn = document.getElementById('logout-btn');
-    const authError = document.getElementById('auth-error');
+    const bajiSelectAdmin = document.getElementById('baji-select');
+    const tabButtons = document.querySelectorAll('.tab-button');
+    const tabContents = document.querySelectorAll('.tab-content');
     const resultMessage = document.getElementById('result-message');
     const dealerMessage = document.getElementById('dealer-message');
     const tokenMessage = document.getElementById('token-message');
-    const loginSection = document.getElementById('login-section');
-    const dataEntrySection = document.getElementById('data-entry-section');
     const dealerSelect = document.getElementById('dealer-select');
-    const tabButtons = document.querySelectorAll('.tab-button');
-    const tabContents = document.querySelectorAll('.tab-content');
-    
     const reportDealerSelect = document.getElementById('report-dealer-select');
     const reportDateInput = document.getElementById('report-date-input');
     const showReportBtn = document.getElementById('showReportBtn');
@@ -56,6 +57,31 @@ function setupAdminPanel() {
     const reportContainer = document.getElementById('reportContainer');
     const graphContainer = document.getElementById('graphContainer');
     let myChartInstance = null;
+
+    // Populate baji select for admin
+    function populateBajiSelect() {
+        bajiSelectAdmin.innerHTML = '';
+        for (let i = 1; i <= 8; i++) {
+            const option = document.createElement('option');
+            option.value = i;
+            option.textContent = `Baji ${i}`;
+            bajiSelectAdmin.appendChild(option);
+        }
+    }
+    populateBajiSelect();
+
+    // Check if admin is logged in
+    if (session) {
+        loginSection.style.display = 'none';
+        dataEntrySection.style.display = 'block';
+        logoutBtn.style.display = 'block';
+        await populateDealers();
+        await populateDealerReportSelect();
+    } else {
+        loginSection.style.display = 'block';
+        dataEntrySection.style.display = 'none';
+        logoutBtn.style.display = 'none';
+    }
 
     tabButtons.forEach(button => {
         button.addEventListener('click', () => {
@@ -77,21 +103,18 @@ function setupAdminPanel() {
         e.preventDefault();
         const nameOrEmail = document.getElementById('email-input').value;
         const password = document.getElementById('password-input').value;
+        authError.textContent = '';
 
-        // প্রথমে এডমিন হিসেবে Supabase Auth দিয়ে লগইন চেষ্টা
+        // First, try to log in as an admin using Supabase Auth.
         const { data: adminAuthData, error: adminAuthError } = await supabase.auth.signInWithPassword({
             email: nameOrEmail,
             password: password,
         });
 
         if (adminAuthData.session) {
-            // এডমিন লগইন সফল হলে
-            loginSection.style.display = 'none';
-            dataEntrySection.style.display = 'block';
-            await populateDealers();
-            await populateDealerReportSelect();
+            window.location.reload();
         } else {
-            // যদি এডমিন লগইন ব্যর্থ হয়, তবে ডিলার হিসেবে লগইন চেষ্টা
+            // If admin login fails, try to log in as a dealer.
             const { data: dealerData, error: dealerError } = await supabase
                 .from('dealers')
                 .select('*')
@@ -100,12 +123,9 @@ function setupAdminPanel() {
                 .single();
 
             if (dealerData) {
-                // ডিলার লগইন সফল হলে
-                localStorage.setItem('currentDealerId', dealerData.id);
-                localStorage.setItem('currentDealerName', dealerData.name);
-                window.location.href = 'dealer-dashboard.html';
+                window.location.href = `dealer-dashboard.html?dealerId=${dealerData.id}`;
             } else {
-                authError.textContent = 'লগইন ব্যর্থ। অনুগ্রহ করে সঠিক নাম/ইমেইল এবং পাসওয়ার্ড দিন।';
+                authError.textContent = 'Login failed. Please enter the correct name/email and password.';
             }
         }
     });
@@ -113,7 +133,7 @@ function setupAdminPanel() {
     resultForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         const date = document.getElementById('date-input').value;
-        const baji = parseInt(document.getElementById('baji-input').value);
+        const baji = parseInt(bajiSelectAdmin.value);
         const patti = document.getElementById('patti-input').value;
         const single = parseInt(document.getElementById('single-input').value);
 
@@ -189,7 +209,7 @@ function setupAdminPanel() {
         } else {
             const { data: transactionData, error: transactionError } = await supabase
                 .from('transactions')
-                .insert([{ sender_id: (await supabase.auth.getSession()).data.session.user.id, receiver_id: dealerId, amount: amount, type: 'credit' }]);
+                .insert([{ sender_id: session.user.id, receiver_id: dealerId, amount: amount, type: 'credit' }]);
             
             if (transactionError) {
                 console.error('Failed to log transaction: ' + transactionError.message);
@@ -232,7 +252,7 @@ function setupAdminPanel() {
             return;
         }
         
-        reportDealerSelect.innerHTML = '<option value="">ডিলার সিলেক্ট করুন</option>';
+        reportDealerSelect.innerHTML = '<option value="">Select Dealer</option>';
         dealers.forEach(dealer => {
             const option = document.createElement('option');
             option.value = dealer.id;
@@ -247,7 +267,7 @@ function setupAdminPanel() {
         if (dealerId && reportDate) {
             fetchAndDisplayReport(dealerId, reportDate);
         } else {
-            alert("অনুগ্রহ করে ডিলার এবং তারিখ সিলেক্ট করুন।");
+            alert("Please select a dealer and a date.");
         }
     });
 
@@ -256,7 +276,7 @@ function setupAdminPanel() {
         if (reportDate) {
             fetchAndDisplayGraph(reportDate);
         } else {
-            alert("অনুগ্রহ করে তারিখ সিলেক্ট করুন।");
+            alert("Please select a date.");
         }
     });
 
@@ -268,7 +288,7 @@ function setupAdminPanel() {
             .eq('play_date', reportDate);
 
         if (error || !plays || plays.length === 0) {
-            reportContainer.innerHTML = '<p>এই তারিখে কোনো রিপোর্ট পাওয়া যায়নি।</p>';
+            reportContainer.innerHTML = '<p>No report found for this date.</p>';
             return;
         }
 
@@ -277,9 +297,9 @@ function setupAdminPanel() {
             .select('*')
             .eq('date', reportDate);
             
-        reportContainer.innerHTML = '<h2>' + reportDate + ' এর রিপোর্ট</h2>';
+        reportContainer.innerHTML = `<h2>Report for ${reportDate}</h2>`;
         reportContainer.innerHTML += '<table border="1" style="width:100%; text-align:center;">';
-        reportContainer.innerHTML += '<thead><tr><th>সময়</th><th>খেলার নম্বর</th><th>উইন নম্বর</th><th>খরচ</th><th>প্রাপ্তি</th><th>লাভ/ক্ষতি</th></tr></thead>';
+        reportContainer.innerHTML += '<thead><tr><th>Time</th><th>Played Numbers</th><th>Winning Number</th><th>Spent</th><th>Prize</th><th>Profit/Loss</th></tr></thead>';
         reportContainer.innerHTML += '<tbody>';
         
         let totalSpent = 0;
@@ -291,7 +311,7 @@ function setupAdminPanel() {
             
             const playedNumbers = Object.keys(play.played_numbers).map(num => `${num}(${play.played_numbers[num]})`).join(', ');
             
-            const prizeTokens = play.played_numbers[winningNumber] * 90;
+            const prizeTokens = (winningNumber !== '-' && play.played_numbers[winningNumber]) ? play.played_numbers[winningNumber] * 90 : 0;
             const profitLoss = prizeTokens - play.total_spent_tokens;
 
             totalSpent += play.total_spent_tokens;
@@ -311,7 +331,7 @@ function setupAdminPanel() {
         
         reportContainer.innerHTML += `
             <tr>
-                <td colspan="3">মোট</td>
+                <td colspan="3">Total</td>
                 <td>${totalSpent}</td>
                 <td>${totalPrize}</td>
                 <td>${totalPrize - totalSpent}</td>
@@ -328,7 +348,7 @@ function setupAdminPanel() {
             .eq('play_date', reportDate);
 
         if (error || !plays || plays.length === 0) {
-            graphContainer.innerHTML = '<p>এই তারিখে কোনো ডেটা পাওয়া যায়নি।</p>';
+            graphContainer.innerHTML = '<p>No data found for this date.</p>';
             if (myChartInstance) myChartInstance.destroy();
             return;
         }
@@ -358,7 +378,7 @@ function setupAdminPanel() {
             data: {
                 labels: labels,
                 datasets: [{
-                    label: 'সবচেয়ে বেশি টোকেন পড়েছে',
+                    label: 'Most tokens placed on',
                     data: data,
                     backgroundColor: 'rgba(243, 156, 18, 0.7)',
                     borderColor: 'rgba(243, 156, 18, 1)',
@@ -368,8 +388,8 @@ function setupAdminPanel() {
             options: {
                 responsive: true,
                 scales: {
-                    x: { title: { display: true, text: 'নম্বর' } },
-                    y: { beginAtZero: true, title: { display: true, text: 'টোকেন' } }
+                    x: { title: { display: true, text: 'Number' } },
+                    y: { beginAtZero: true, title: { display: true, text: 'Tokens' } }
                 }
             }
         });
@@ -383,10 +403,10 @@ function setupAdminPanel() {
 
 }
 
-// --- ডিলার ড্যাশবোর্ডের জন্য ফাংশন ---
-function setupDealerDashboard() {
-    const dealerId = localStorage.getItem('currentDealerId');
-    const dealerName = localStorage.getItem('currentDealerName');
+// --- Functions for Dealer Dashboard ---
+async function setupDealerDashboard() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const dealerId = urlParams.get('dealerId');
     
     const dealerNameDisplay = document.getElementById('dealer-name-display');
     const tokenBalanceDisplay = document.getElementById('current-token-balance');
@@ -397,23 +417,30 @@ function setupDealerDashboard() {
     const betMessage = document.getElementById('bet-message');
     const slipsContainer = document.getElementById('slips-container');
     const bajiSelect = document.getElementById('baji-select');
-    const placeBetBtn = document.getElementById('place-bet-btn');
     const bettingClosedMessage = document.getElementById('betting-closed-message');
 
     if (!dealerId) {
-        window.location.href = 'admin.html'; // যদি ডিলার লগইন না থাকে, লগইন পেজে ফিরিয়ে দিন
+        window.location.href = 'admin.html'; // Redirect to login page if dealerId is not in URL
         return;
     }
 
-    dealerNameDisplay.textContent = `স্বাগতম, ${dealerName}!`;
+    const { data: dealerData, error: dealerError } = await supabase
+        .from('dealers')
+        .select('name')
+        .eq('id', dealerId)
+        .single();
+    
+    if (dealerData) {
+        dealerNameDisplay.textContent = `Welcome, ${dealerData.name}!`;
+    } else {
+        dealerNameDisplay.textContent = `Welcome!`;
+        console.error('Failed to fetch dealer name:', dealerError.message);
+    }
     
     logoutBtn.addEventListener('click', () => {
-        localStorage.removeItem('currentDealerId');
-        localStorage.removeItem('currentDealerName');
         window.location.href = 'admin.html';
     });
     
-    // টোকেন ব্যালেন্স আপডেট করা
     async function updateDealerBalance() {
         const { data, error } = await supabase
             .from('dealers')
@@ -422,13 +449,12 @@ function setupDealerDashboard() {
             .single();
 
         if (data) {
-            tokenBalanceDisplay.textContent = `আপনার টোকেন ব্যালেন্স: ${data.token_balance || 0} টোকেন`;
+            tokenBalanceDisplay.textContent = `Your Token Balance: ${data.token_balance || 0} tokens`;
         } else {
             console.error('Failed to fetch dealer balance:', error.message);
         }
     }
 
-    // বাজি সিলেক্ট অপশন পপুলেট করা এবং বেটিং বন্ধ করার লজিক
     async function setupBajiSchedule() {
         const bajiSlots = [
             { id: 1, time: '11:00 AM', hour: 11, minute: 0 },
@@ -460,7 +486,6 @@ function setupDealerDashboard() {
         }
     }
     
-    // বেটিং ফর্ম জমা দেওয়া
     bettingForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         const baji = parseInt(bajiSelect.value);
@@ -468,7 +493,7 @@ function setupDealerDashboard() {
         const amount = parseInt(betAmountInput.value);
 
         if (isNaN(number) || number < 0 || number > 9 || isNaN(amount) || amount <= 0) {
-            betMessage.textContent = 'অনুগ্রহ করে সঠিক নম্বর (0-9) এবং পরিমাণ লিখুন।';
+            betMessage.textContent = 'Please enter a valid number (0-9) and amount.';
             betMessage.style.color = 'red';
             return;
         }
@@ -480,26 +505,24 @@ function setupDealerDashboard() {
             .single();
         
         if (fetchError || dealer.token_balance < amount) {
-            betMessage.textContent = 'আপনার পর্যাপ্ত টোকেন নেই।';
+            betMessage.textContent = 'You do not have enough tokens.';
             betMessage.style.color = 'red';
             return;
         }
         
         const newBalance = dealer.token_balance - amount;
 
-        // ডিলারের টোকেন ব্যালেন্স আপডেট করা
         const { error: updateError } = await supabase
             .from('dealers')
             .update({ token_balance: newBalance })
             .eq('id', dealerId);
 
         if (updateError) {
-            betMessage.textContent = 'টোকেন আপডেটে ব্যর্থ: ' + updateError.message;
+            betMessage.textContent = 'Failed to update tokens: ' + updateError.message;
             betMessage.style.color = 'red';
             return;
         }
 
-        // বেটিং ডেটা সেভ করা
         const { error: playError } = await supabase
             .from('plays')
             .insert([{ 
@@ -512,21 +535,20 @@ function setupDealerDashboard() {
             }]);
 
         if (playError) {
-            betMessage.textContent = 'বেট সেভ করতে ব্যর্থ: ' + playError.message;
+            betMessage.textContent = 'Failed to save bet: ' + playError.message;
             betMessage.style.color = 'red';
-            await supabase.from('dealers').update({ token_balance: dealer.token_balance }).eq('id', dealerId); // যদি সেভ না হয়, টোকেন ফিরিয়ে দিন
+            await supabase.from('dealers').update({ token_balance: dealer.token_balance }).eq('id', dealerId);
             return;
         }
 
-        betMessage.textContent = 'বেট সফল হয়েছে!';
+        betMessage.textContent = 'Bet placed successfully!';
         betMessage.style.color = 'green';
         bettingForm.reset();
-        await updateDealerBalance(); // নতুন ব্যালেন্স ডিসপ্লে করা
-        await fetchAndDisplaySlips(); // নতুন স্লিপ ডিসপ্লে করা
+        await updateDealerBalance();
+        await fetchAndDisplaySlips(dealerId);
     });
 
-    // ডিলারের স্লিপগুলো ডিসপ্লে করা
-    async function fetchAndDisplaySlips() {
+    async function fetchAndDisplaySlips(dealerId) {
         const today = new Date().toISOString().split('T')[0];
         const { data: plays, error } = await supabase
             .from('plays')
@@ -536,7 +558,7 @@ function setupDealerDashboard() {
             .order('baji_slot', { ascending: true });
 
         if (error || !plays || plays.length === 0) {
-            slipsContainer.innerHTML = '<p style="text-align: center;">আজকে কোনো বেট করা হয়নি।</p>';
+            slipsContainer.innerHTML = '<p style="text-align: center;">No bets placed today.</p>';
             return;
         }
 
@@ -554,34 +576,32 @@ function setupDealerDashboard() {
             const playedNumber = Object.keys(play.played_numbers)[0];
             const betAmount = play.played_numbers[playedNumber];
             const won = (winningNumber !== '-') && (parseInt(playedNumber) === winningNumber);
-            const prize = won ? (betAmount * 9) : 0;
+            const prize = won ? (betAmount * 90) : 0;
             const statusColor = won ? 'green' : 'red';
-            const statusText = won ? 'অভিনন্দন, আপনি জিতেছেন!' : 'দুঃখিত, আপনি হেরেছেন।';
+            const statusText = won ? 'Congratulations, you won!' : 'Sorry, you lost.';
             
             slip.innerHTML = `
                 <h3>${play.baji_slot}th Baji - ${play.play_time}</h3>
-                <p><strong>আপনার নম্বর:</strong> ${playedNumber} (টোকেন: ${betAmount})</p>
-                <p><strong>বিজয়ী নম্বর:</strong> ${winningNumber}</p>
+                <p><strong>Your Number:</strong> ${playedNumber} (Tokens: ${betAmount})</p>
+                <p><strong>Winning Number:</strong> ${winningNumber}</p>
                 <p style="color: ${statusColor}; font-weight: bold;">${statusText}</p>
-                <p><strong>প্রাপ্ত টোকেন:</strong> ${prize}</p>
+                <p><strong>Prize Tokens:</strong> ${prize}</p>
             `;
             slipsContainer.appendChild(slip);
         });
     }
 
-    // ড্যাশবোর্ড লোড হওয়ার সাথে সাথে ফাংশনগুলো কল করা
     updateDealerBalance();
     setupBajiSchedule();
-    fetchAndDisplaySlips();
+    fetchAndDisplaySlips(dealerId);
     
-    // প্রতি 10 সেকেন্ডে ব্যালেন্স এবং স্লিপ আপডেট করা
     setInterval(() => {
         updateDealerBalance();
-        fetchAndDisplaySlips();
+        fetchAndDisplaySlips(dealerId);
     }, 10000);
 }
 
-// --- উভয় প্যানেলের জন্য কমন ফাংশন ---
+// --- Common Functions for Both Panels ---
 function setupLoginButton() {
     const loginLink = document.getElementById('login-link');
     if (loginLink) {
@@ -623,12 +643,12 @@ async function fetchTodayResults() {
         `;
         resultsGrid.appendChild(resultBox);
     }
-    document.getElementById('current-date').textContent = new Date().toLocaleDateString('bn-IN');
+    document.getElementById('current-date').textContent = new Date().toLocaleDateString('en-US');
 }
 
 async function fetchOldResults() {
     const { data: results, error } = await supabase
-        .from('results')
+        .from('old_results') // Changed to fetch from 'old_results' table
         .select('*')
         .order('date', { ascending: false })
         .limit(100);
@@ -654,7 +674,7 @@ async function fetchOldResults() {
         const dayContainer = document.createElement('div');
         dayContainer.className = 'old-results-day';
         dayContainer.innerHTML = `
-            <div class="result-date">${new Date(date).toLocaleDateString('bn-IN')}</div>
+            <div class="result-date">${new Date(date).toLocaleDateString('en-US')}</div>
             <div class="results-grid"></div>
         `;
         oldResultsContainer.appendChild(dayContainer);
