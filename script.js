@@ -1,6 +1,6 @@
 // আপনার Supabase URL এবং anon (public) Key এখানে বসান।
 const SUPABASE_URL = "https://urjcuxavrkyqttwtqvjx.supabase.co";
-const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVyamN1eGF2cmt5cXR0d3Rxdmp4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU0MDI5NDIsImV4cCI6MjA3MDk3ODk0Mn0._HzIlEtRtwnsssFGonEqrHcqBm9WtXAx7bWa6S-9ErQ";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVyamN1eGF2cmt5cXR0d3Rxdmp4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU0MDI5NDIsImV4cCI6MjA3MDk3ODk0Mn0._HzIlEtEtRtwnsssFGonEqrHcqBm9WtXAx7bWa6S-9ErQ";
 
 // Supabase এবং Chart.js লাইব্রেরি সরাসরি লোড করা হচ্ছে
 const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -10,12 +10,21 @@ document.addEventListener('DOMContentLoaded', () => {
     if (document.querySelector('#login-section')) {
         setupAdminPanel();
     } else {
+        // এই ব্লকটি শুধুমাত্র index.html এর জন্য
         fetchTodayResults();
         fetchOldResults();
         setupLoginButton();
         startLiveAnimation();
     }
 });
+
+function setupLoginButton() {
+    // লগইন বাটনকে সঠিক URL-এ নির্দেশ করার জন্য
+    const loginLink = document.getElementById('login-link');
+    if (loginLink) {
+        loginLink.href = 'admin.html'; // সঠিক রিলেটিভ পাথ
+    }
+}
 
 function setupAdminPanel() {
     const loginForm = document.getElementById('login-form');
@@ -33,16 +42,14 @@ function setupAdminPanel() {
     const tabButtons = document.querySelectorAll('.tab-button');
     const tabContents = document.querySelectorAll('.tab-content');
     
-    // নতুন রিপোর্টিং এবং গ্রাফিং উপাদান
     const reportDealerSelect = document.getElementById('report-dealer-select');
     const reportDateInput = document.getElementById('report-date-input');
     const showReportBtn = document.getElementById('showReportBtn');
     const showGraphBtn = document.getElementById('showGraphBtn');
     const reportContainer = document.getElementById('reportContainer');
     const graphContainer = document.getElementById('graphContainer');
-    let myChartInstance = null; // গ্রাফের জন্য ইনস্ট্যান্স
+    let myChartInstance = null;
 
-    // টাব পরিবর্তন করা
     tabButtons.forEach(button => {
         button.addEventListener('click', () => {
             tabButtons.forEach(btn => btn.classList.remove('active'));
@@ -52,7 +59,6 @@ function setupAdminPanel() {
             const tabId = button.dataset.tab;
             document.getElementById(tabId).classList.add('active');
             
-            // ট্যাব পরিবর্তনের সময় গ্রাফ পরিষ্কার করা
             if (myChartInstance) {
                 myChartInstance.destroy();
                 myChartInstance = null;
@@ -60,7 +66,6 @@ function setupAdminPanel() {
         });
     });
 
-    // লগইন ফর্ম সাবমিট হলে
     loginForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         const email = document.getElementById('email-input').value;
@@ -81,7 +86,6 @@ function setupAdminPanel() {
         }
     });
 
-    // রেজাল্ট ফর্ম সাবমিট হলে
     resultForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         const date = document.getElementById('date-input').value;
@@ -103,7 +107,6 @@ function setupAdminPanel() {
         }
     });
 
-    // নতুন ডিলার যোগ করার ফর্ম সাবমিট হলে
     dealerForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         const name = document.getElementById('dealer-name').value;
@@ -141,7 +144,6 @@ function setupAdminPanel() {
         }
     });
 
-    // টোকেন ট্রান্সফার ফর্ম সাবমিট হলে
     tokenTransferForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         const dealerId = document.getElementById('dealer-select').value;
@@ -192,7 +194,6 @@ function setupAdminPanel() {
         }
     });
 
-    // ডিলার তালিকা লোড করা
     async function populateDealers() {
         const { data: dealers, error } = await supabase
             .from('dealers')
@@ -212,7 +213,6 @@ function setupAdminPanel() {
         });
     }
 
-    // ডিলার রিপোর্ট ড্রপডাউন লোড করা
     async function populateDealerReportSelect() {
         const { data: dealers, error } = await supabase
             .from('dealers')
@@ -232,7 +232,6 @@ function setupAdminPanel() {
         });
     }
 
-    // রিপোর্ট দেখানোর বাটন
     showReportBtn.addEventListener('click', () => {
         const dealerId = reportDealerSelect.value;
         const reportDate = reportDateInput.value;
@@ -243,7 +242,6 @@ function setupAdminPanel() {
         }
     });
 
-    // গ্রাফ দেখানোর বাটন
     showGraphBtn.addEventListener('click', () => {
         const dealerId = reportDealerSelect.value;
         const reportDate = reportDateInput.value;
@@ -254,7 +252,6 @@ function setupAdminPanel() {
         }
     });
 
-    // রিপোর্ট লোড এবং প্রদর্শন করার ফাংশন
     async function fetchAndDisplayReport(dealerId, reportDate) {
         const { data: plays, error } = await supabase
             .from('plays')
@@ -286,7 +283,7 @@ function setupAdminPanel() {
             
             const playedNumbers = Object.keys(play.played_numbers).map(num => `${num}(${play.played_numbers[num]})`).join(', ');
             
-            const prizeTokens = play.played_numbers[winningNumber] * 90; // প্রাইস টোকেন হিসাব
+            const prizeTokens = play.played_numbers[winningNumber] * 90;
             const profitLoss = prizeTokens - play.total_spent_tokens;
 
             totalSpent += play.total_spent_tokens;
@@ -316,7 +313,6 @@ function setupAdminPanel() {
         graphContainer.innerHTML = '';
     }
 
-    // গ্রাফ লোড এবং প্রদর্শন করার ফাংশন
     async function fetchAndDisplayGraph(dealerId, reportDate) {
         const { data: plays, error } = await supabase
             .from('plays')
@@ -373,13 +369,11 @@ function setupAdminPanel() {
         reportContainer.innerHTML = '';
     }
     
-    // লগআউট বাটনে ক্লিক হলে
     logoutBtn.addEventListener('click', async () => {
         const { error } = await supabase.auth.signOut();
         window.location.reload();
     });
 
-    // এই ফাংশনগুলো আগের কোড থেকে নেওয়া হয়েছে
     async function fetchTodayResults() {
         const today = new Date().toISOString().split('T')[0];
         const { data: results, error } = await supabase
@@ -394,7 +388,7 @@ function setupAdminPanel() {
         }
 
         const resultsGrid = document.querySelector('.today-result .results-grid');
-        resultsGrid.innerHTML = ''; // Clear previous results
+        resultsGrid.innerHTML = '';
 
         const slotMap = new Map();
         results.forEach(result => {
@@ -467,11 +461,6 @@ function setupAdminPanel() {
                 resultsGrid.appendChild(resultBox);
             }
         }
-    }
-
-    function setupLoginButton() {
-        const loginLink = document.getElementById('login-link');
-        loginLink.href = 'admin.html';
     }
 
     function startLiveAnimation() {
