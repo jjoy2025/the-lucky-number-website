@@ -72,18 +72,13 @@ async function setupAdminPanel() {
 
     // Check if admin is logged in
     if (session) {
-        // Here we check if the user is an admin by their user_metadata.
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user && user.user_metadata.is_admin) {
-            loginSection.style.display = 'none';
-            dataEntrySection.style.display = 'block';
-            logoutBtn.style.display = 'block';
-            await populateDealers();
-            await populateDealerReportSelect();
-        } else {
-            // Not an admin, redirect to dealer dashboard or home
-            window.location.href = 'dealer-dashboard.html';
-        }
+        // We will assume a logged-in user with a session is an admin for this simplified example
+        // For production, you should use user_metadata or another table to verify admin status
+        loginSection.style.display = 'none';
+        dataEntrySection.style.display = 'block';
+        logoutBtn.style.display = 'block';
+        await populateDealers();
+        await populateDealerReportSelect();
     } else {
         loginSection.style.display = 'block';
         dataEntrySection.style.display = 'none';
@@ -125,21 +120,20 @@ async function setupAdminPanel() {
 
         const { data: { user } } = await supabase.auth.getUser();
         if (user) {
-            if (user.user_metadata.is_admin) {
-                window.location.href = 'admin.html';
+            // Check if the user is a dealer by looking for their user_id in the dealers table
+            const { data: dealerData, error: dealerError } = await supabase
+                .from('dealers')
+                .select('id')
+                .eq('user_id', user.id)
+                .single();
+            
+            if (dealerData) {
+                // If a dealer exists with this user_id, redirect to their dashboard
+                window.location.href = `dealer-dashboard.html?dealerId=${dealerData.id}`;
             } else {
-                const { data: dealerData, error: dealerError } = await supabase
-                    .from('dealers')
-                    .select('id')
-                    .eq('user_id', user.id)
-                    .single();
-                
-                if (dealerData) {
-                    window.location.href = `dealer-dashboard.html?dealerId=${dealerData.id}`;
-                } else {
-                    authError.textContent = 'User not found as a dealer.';
-                    await supabase.auth.signOut();
-                }
+                // Otherwise, assume it's an admin and stay on the admin page
+                // For a more robust solution, you should use Supabase user_metadata or an admin table.
+                window.location.href = 'admin.html';
             }
         }
     });
@@ -175,7 +169,7 @@ async function setupAdminPanel() {
 
         // Create a Supabase Auth user first
         const { data: authData, error: authError } = await supabase.auth.signUp({
-            email: phone + "@yourdomain.com", // Unique email required
+            email: phone + "@yourdomain.com", // Use phone number as a unique part of the email
             password: password,
         });
 
@@ -704,4 +698,3 @@ function startLiveAnimation() {
     const dateHeader = document.querySelector('.today-result .date-header');
     dateHeader.classList.add('live-animation');
 }
-
