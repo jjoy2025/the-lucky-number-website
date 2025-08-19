@@ -115,11 +115,11 @@ async function setupAdminPanel() {
         if (adminAuthData.session) {
             window.location.reload();
         } else {
-            // Try to log in as a dealer using custom database query
+            // Try to log in as a dealer using custom database query with name or phone
             const { data: dealerData, error: dealerError } = await supabase
                 .from('dealers')
                 .select('*')
-                .eq('name', nameOrEmail)
+                .or(`name.eq.${nameOrEmail},phone_number.eq.${nameOrEmail}`)
                 .eq('password', password)
                 .single();
 
@@ -719,4 +719,3 @@ function startLiveAnimation() {
     const dateHeader = document.querySelector('.today-result .date-header');
     dateHeader.classList.add('live-animation');
 }
-
