@@ -1,6 +1,6 @@
 // Your Supabase URL and anon (public) Key go here.
-const SUPABASE_URL = "https://urjcuxavrkyqttwtqvjx.supabase.co"; // Replace with your actual Supabase URL
-const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVyamN1eGF2cmt5cXR0d3Rxdmp4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU0MDI5NDIsImV4cCI6MjA3MDk3ODk0Mn0._HzIlEtRtwnsssFGonEqrHcqBm9WtXAx7bWa6S-9ErQ"; // Replace with your actual anon key
+const SUPABASE_URL = "https://urjcuxavrkyqttwtqvjx.supabase.co";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVyamN1eGF2cmt5cXR0d3Rxdmp4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU0MDI5NDIsImV4cCI6MjA3MDk3ODk0Mn0._HzIlEtRtwnsssFGonEqrHcqBm9WtXAx7bWa6S-9ErQ";
 
 // Supabase library is loaded directly.
 const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -72,11 +72,18 @@ async function setupAdminPanel() {
 
     // Check if admin is logged in
     if (session) {
-        loginSection.style.display = 'none';
-        dataEntrySection.style.display = 'block';
-        logoutBtn.style.display = 'block';
-        await populateDealers();
-        await populateDealerReportSelect();
+        // Here we check if the user is an admin by their user_metadata.
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user && user.user_metadata.is_admin) {
+            loginSection.style.display = 'none';
+            dataEntrySection.style.display = 'block';
+            logoutBtn.style.display = 'block';
+            await populateDealers();
+            await populateDealerReportSelect();
+        } else {
+            // Not an admin, redirect to dealer dashboard or home
+            window.location.href = 'dealer-dashboard.html';
+        }
     } else {
         loginSection.style.display = 'block';
         dataEntrySection.style.display = 'none';
@@ -99,34 +106,40 @@ async function setupAdminPanel() {
         });
     });
 
-    // --- UPDATED LOGIC FOR LOGIN ---
+    // --- FINAL LOGIC FOR LOGIN ---
     loginForm.addEventListener('submit', async (e) => {
         e.preventDefault();
-        const nameOrEmail = document.getElementById('email-input').value;
+        const email = document.getElementById('email-input').value;
         const password = document.getElementById('password-input').value;
         authError.textContent = '';
 
-        // First, try to log in as an admin using Supabase Auth.
-        const { data: adminAuthData, error: adminAuthError } = await supabase.auth.signInWithPassword({
-            email: nameOrEmail,
-            password: password,
+        const { data: authData, error: authErrorResponse } = await supabase.auth.signInWithPassword({
+            email,
+            password,
         });
 
-        if (adminAuthData.session) {
-            window.location.reload();
-        } else {
-            // Try to log in as a dealer using custom database query with name or phone
-            const { data: dealerData, error: dealerError } = await supabase
-                .from('dealers')
-                .select('*')
-                .or(`name.eq.${nameOrEmail},phone_number.eq.${nameOrEmail}`)
-                .eq('password', password)
-                .single();
+        if (authErrorResponse) {
+            authError.textContent = 'Login failed: ' + authErrorResponse.message;
+            return;
+        }
 
-            if (dealerData) {
-                window.location.href = `dealer-dashboard.html?dealerId=${dealerData.id}`;
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+            if (user.user_metadata.is_admin) {
+                window.location.href = 'admin.html';
             } else {
-                authError.textContent = 'Login failed. Please enter the correct name/email and password.';
+                const { data: dealerData, error: dealerError } = await supabase
+                    .from('dealers')
+                    .select('id')
+                    .eq('user_id', user.id)
+                    .single();
+                
+                if (dealerData) {
+                    window.location.href = `dealer-dashboard.html?dealerId=${dealerData.id}`;
+                } else {
+                    authError.textContent = 'User not found as a dealer.';
+                    await supabase.auth.signOut();
+                }
             }
         }
     });
@@ -152,32 +165,46 @@ async function setupAdminPanel() {
         }
     });
 
-    // --- UPDATED LOGIC FOR ADDING DEALER ---
+    // --- FINAL LOGIC FOR ADDING DEALER ---
     dealerForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         const name = document.getElementById('dealer-name').value;
         const phone = document.getElementById('dealer-phone').value;
         const password = document.getElementById('dealer-password').value;
-        dealerMessage.textContent = ''; // Clear previous messages
+        dealerMessage.textContent = '';
 
-        // Directly insert the dealer into the 'dealers' table without using Supabase Auth
+        // Create a Supabase Auth user first
+        const { data: authData, error: authError } = await supabase.auth.signUp({
+            email: phone + "@yourdomain.com", // Unique email required
+            password: password,
+        });
+
+        if (authError) {
+            dealerMessage.textContent = 'Failed to create user: ' + authError.message;
+            dealerMessage.style.color = 'red';
+            return;
+        }
+
+        // Then, insert the dealer details into the `dealers` table
         const { data, error } = await supabase
             .from('dealers')
-            .insert([{ name: name, phone_number: phone, password: password, token_balance: 0 }]);
+            .insert([{ user_id: authData.user.id, name: name, phone_number: phone, token_balance: 0 }]);
         
         if (error) {
-            dealerMessage.textContent = 'Failed to add dealer: ' + error.message;
+            dealerMessage.textContent = 'Failed to add dealer to database: ' + error.message;
             dealerMessage.style.color = 'red';
+            // It's good practice to delete the auth user if this fails
+            await supabase.auth.admin.deleteUser(authData.user.id);
         } else {
             dealerMessage.textContent = 'Dealer added successfully!';
             dealerMessage.style.color = 'green';
             dealerForm.reset();
-            await populateDealers(); // This function will update the dealer list
+            await populateDealers();
             await populateDealerReportSelect();
         }
     });
 
-    // --- UPDATED CODE FOR TOKEN TRANSFER ---
+    // --- FINAL CODE FOR TOKEN TRANSFER ---
     tokenTransferForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         const dealerId = document.getElementById('dealer-select').value;
@@ -189,24 +216,15 @@ async function setupAdminPanel() {
             return;
         }
 
-        // Call the Supabase database function to safely increment the balance
+        // Call the secure RPC function
         const { data: updateData, error: updateError } = await supabase
-            .rpc('increment_token_balance', { dealer_id: dealerId, amount: amount });
+            .rpc('transfer_tokens', { dealer_id_in: dealerId, amount_in: amount });
         
         if (updateError) {
             tokenMessage.textContent = 'Failed to transfer tokens: ' + updateError.message;
             tokenMessage.style.color = 'red';
             console.error('Database function call failed:', updateError);
         } else {
-            // Log the transaction after the balance is successfully updated
-            const { data: transactionData, error: transactionError } = await supabase
-                .from('transactions')
-                .insert([{ sender_id: session.user.id, receiver_id: dealerId, amount: amount, type: 'credit' }]);
-            
-            if (transactionError) {
-                console.error('Failed to log transaction:', transactionError.message);
-            }
-            
             tokenMessage.textContent = 'Tokens transferred successfully!';
             tokenMessage.style.color = 'green';
             tokenTransferForm.reset();
@@ -397,11 +415,10 @@ async function setupAdminPanel() {
 
 // --- Functions for Dealer Dashboard ---
 async function setupDealerDashboard() {
-    const urlParams = new URLSearchParams(window.location.search);
-    const dealerId = urlParams.get('dealerId');
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
     
-    if (!dealerId) {
-        window.location.href = 'admin.html';
+    if (!session) {
+        window.location.href = 'admin.html'; // Redirect to login page if not authenticated
         return;
     }
     
@@ -418,204 +435,172 @@ async function setupDealerDashboard() {
 
     const { data: dealerData, error: dealerError } = await supabase
         .from('dealers')
-        .select('name')
-        .eq('id', dealerId)
+        .select('id, name')
+        .eq('user_id', session.user.id)
         .single();
     
     if (dealerData) {
         dealerNameDisplay.textContent = `Welcome, ${dealerData.name}!`;
+        const dealerId = dealerData.id;
+
+        logoutBtn.addEventListener('click', async () => {
+            const { error } = await supabase.auth.signOut();
+            window.location.href = 'admin.html';
+        });
+        
+        async function updateDealerBalance() {
+            const { data, error } = await supabase
+                .from('dealers')
+                .select('token_balance')
+                .eq('id', dealerId)
+                .single();
+
+            if (data) {
+                tokenBalanceDisplay.textContent = `Your Token Balance: ${data.token_balance || 0} tokens`;
+            } else {
+                console.error('Failed to fetch dealer balance:', error.message);
+            }
+        }
+
+        async function setupBajiSchedule() {
+            const bajiSlots = [
+                { id: 1, time: '11:00 AM', hour: 11, minute: 0 },
+                { id: 2, time: '12:30 PM', hour: 12, minute: 30 },
+                { id: 3, time: '2:00 PM', hour: 14, minute: 0 },
+                { id: 4, time: '3:30 PM', hour: 15, minute: 30 },
+                { id: 5, time: '5:00 PM', hour: 17, minute: 0 },
+                { id: 6, time: '6:30 PM', hour: 18, minute: 30 },
+                { id: 7, time: '8:00 PM', hour: 20, minute: 0 },
+                { id: 8, time: '9:00 PM', hour: 21, minute: 0 }
+            ];
+
+            bajiSelect.innerHTML = '';
+            const now = new Date();
+            const futureBajis = [];
+
+            bajiSlots.forEach(baji => {
+                const bajiTime = new Date(now.getFullYear(), now.getMonth(), now.getDate(), baji.hour, baji.minute);
+                if (bajiTime > now) {
+                    futureBajis.push({ ...baji, date: now });
+                }
+            });
+
+            if (futureBajis.length === 0) {
+                const tomorrow = new Date(now);
+                tomorrow.setDate(now.getDate() + 1);
+                futureBajis.push({ ...bajiSlots[0], date: tomorrow });
+            }
+
+            const nextBaji = futureBajis.find(baji => {
+                const bajiTime = new Date(baji.date.getFullYear(), baji.date.getMonth(), baji.date.getDate(), baji.hour, baji.minute);
+                const timeDifference = (bajiTime.getTime() - now.getTime()) / (1000 * 60);
+                return timeDifference > 20;
+            });
+
+            if (nextBaji) {
+                const option = document.createElement('option');
+                option.value = nextBaji.id;
+                const isTomorrow = nextBaji.date.getDate() !== now.getDate();
+                const tomorrowText = isTomorrow ? " (Tomorrow)" : "";
+                option.textContent = `${nextBaji.id}th Baji - ${nextBaji.time}${tomorrowText}`;
+                bajiSelect.appendChild(option);
+                bettingForm.style.display = 'block';
+                bettingClosedMessage.style.display = 'none';
+            } else {
+                bettingForm.style.display = 'none';
+                bettingClosedMessage.style.display = 'block';
+            }
+        }
+        
+        bettingForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const baji = parseInt(bajiSelect.value);
+            const number = parseInt(betNumberInput.value);
+            const amount = parseInt(betAmountInput.value);
+
+            if (isNaN(number) || number < 0 || number > 9 || isNaN(amount) || amount <= 0) {
+                betMessage.textContent = 'Please enter a valid number (0-9) and amount.';
+                betMessage.style.color = 'red';
+                return;
+            }
+
+            // Call the secure RPC function
+            const { error: rpcError } = await supabase.rpc('place_bet', {
+                dealer_id_in: dealerId,
+                baji_slot_in: baji,
+                bet_number_in: number.toString(),
+                bet_amount_in: amount
+            });
+
+            if (rpcError) {
+                betMessage.textContent = 'Failed to place bet: ' + rpcError.message;
+                betMessage.style.color = 'red';
+                return;
+            }
+
+            betMessage.textContent = 'Bet placed successfully!';
+            betMessage.style.color = 'green';
+            bettingForm.reset();
+            await updateDealerBalance();
+            await fetchAndDisplaySlips(dealerId);
+        });
+
+        async function fetchAndDisplaySlips(dealerId) {
+            const today = new Date().toISOString().split('T')[0];
+            const { data: plays, error } = await supabase
+                .from('plays')
+                .select('*')
+                .eq('dealer_id', dealerId)
+                .eq('play_date', today)
+                .order('baji_slot', { ascending: true });
+
+            if (error || !plays || plays.length === 0) {
+                slipsContainer.innerHTML = '<p style="text-align: center;">No bets placed today.</p>';
+                return;
+            }
+
+            const { data: results } = await supabase
+                .from('results')
+                .select('*')
+                .eq('date', today);
+
+            slipsContainer.innerHTML = '';
+            plays.forEach(play => {
+                const slip = document.createElement('div');
+                slip.className = 'admin-section';
+                const result = results.find(r => r.slot_id === play.baji_slot);
+                const winningNumber = result ? result.single_number : '-';
+                const playedNumber = Object.keys(play.played_numbers)[0];
+                const betAmount = play.played_numbers[playedNumber];
+                const won = (winningNumber !== '-') && (parseInt(playedNumber) === winningNumber);
+                const prize = won ? (betAmount * 90) : 0;
+                const statusColor = won ? 'green' : 'red';
+                const statusText = won ? 'Congratulations, you won!' : 'Sorry, you lost.';
+                
+                slip.innerHTML = `
+                    <h3>${play.baji_slot}th Baji - ${play.play_time}</h3>
+                    <p><strong>Your Number:</strong> ${playedNumber} (Tokens: ${betAmount})</p>
+                    <p><strong>Winning Number:</strong> ${winningNumber}</p>
+                    <p style="color: ${statusColor}; font-weight: bold;">${statusText}</p>
+                    <p><strong>Prize Tokens:</strong> ${prize}</p>
+                `;
+                slipsContainer.appendChild(slip);
+            });
+        }
+
+        updateDealerBalance();
+        setupBajiSchedule();
+        fetchAndDisplaySlips(dealerId);
+        
+        setInterval(() => {
+            updateDealerBalance();
+            fetchAndDisplaySlips(dealerId);
+            setupBajiSchedule();
+        }, 5000);
     } else {
-        dealerNameDisplay.textContent = `Welcome!`;
+        dealerNameDisplay.textContent = `Error! Dealer not found.`;
         console.error('Failed to fetch dealer name:', dealerError.message);
     }
-    
-    logoutBtn.addEventListener('click', async () => {
-        const { error } = await supabase.auth.signOut();
-        window.location.href = 'admin.html';
-    });
-    
-    async function updateDealerBalance() {
-        const { data, error } = await supabase
-            .from('dealers')
-            .select('token_balance')
-            .eq('id', dealerId)
-            .single();
-
-        if (data) {
-            tokenBalanceDisplay.textContent = `Your Token Balance: ${data.token_balance || 0} tokens`;
-        } else {
-            console.error('Failed to fetch dealer balance:', error.message);
-        }
-    }
-
-    // --- UPDATED BAJI SCHEDULE LOGIC ---
-    async function setupBajiSchedule() {
-        const bajiSlots = [
-            { id: 1, time: '11:00 AM', hour: 11, minute: 0 },
-            { id: 2, time: '12:30 PM', hour: 12, minute: 30 },
-            { id: 3, time: '2:00 PM', hour: 14, minute: 0 },
-            { id: 4, time: '3:30 PM', hour: 15, minute: 30 },
-            { id: 5, time: '5:00 PM', hour: 17, minute: 0 },
-            { id: 6, time: '6:30 PM', hour: 18, minute: 30 },
-            { id: 7, time: '8:00 PM', hour: 20, minute: 0 },
-            { id: 8, time: '9:00 PM', hour: 21, minute: 0 }
-        ];
-
-        bajiSelect.innerHTML = '';
-        const now = new Date();
-        const futureBajis = [];
-
-        // Check for bajis today
-        bajiSlots.forEach(baji => {
-            const bajiTime = new Date(now.getFullYear(), now.getMonth(), now.getDate(), baji.hour, baji.minute);
-            if (bajiTime > now) {
-                futureBajis.push({ ...baji, date: now });
-            }
-        });
-
-        // If no more bajis today, check for tomorrow
-        if (futureBajis.length === 0) {
-            const tomorrow = new Date(now);
-            tomorrow.setDate(now.getDate() + 1);
-            futureBajis.push({ ...bajiSlots[0], date: tomorrow });
-        }
-
-        const nextBaji = futureBajis.find(baji => {
-            const bajiTime = new Date(baji.date.getFullYear(), baji.date.getMonth(), baji.date.getDate(), baji.hour, baji.minute);
-            const timeDifference = (bajiTime.getTime() - now.getTime()) / (1000 * 60); // Difference in minutes
-            return timeDifference > 20;
-        });
-
-        if (nextBaji) {
-            const option = document.createElement('option');
-            option.value = nextBaji.id;
-            const isTomorrow = nextBaji.date.getDate() !== now.getDate();
-            const tomorrowText = isTomorrow ? " (Tomorrow)" : "";
-            option.textContent = `${nextBaji.id}th Baji - ${nextBaji.time}${tomorrowText}`;
-            bajiSelect.appendChild(option);
-            bettingForm.style.display = 'block';
-            bettingClosedMessage.style.display = 'none';
-        } else {
-            bettingForm.style.display = 'none';
-            bettingClosedMessage.style.display = 'block';
-        }
-    }
-    
-    bettingForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const baji = parseInt(bajiSelect.value);
-        const number = parseInt(betNumberInput.value);
-        const amount = parseInt(betAmountInput.value);
-
-        if (isNaN(number) || number < 0 || number > 9 || isNaN(amount) || amount <= 0) {
-            betMessage.textContent = 'Please enter a valid number (0-9) and amount.';
-            betMessage.style.color = 'red';
-            return;
-        }
-
-        const { data: dealer, error: fetchError } = await supabase
-            .from('dealers')
-            .select('token_balance')
-            .eq('id', dealerId)
-            .single();
-        
-        if (fetchError || dealer.token_balance < amount) {
-            betMessage.textContent = 'You do not have enough tokens.';
-            betMessage.style.color = 'red';
-            return;
-        }
-        
-        const newBalance = dealer.token_balance - amount;
-
-        const { error: updateError } = await supabase
-            .from('dealers')
-            .update({ token_balance: newBalance })
-            .eq('id', dealerId);
-
-        if (updateError) {
-            betMessage.textContent = 'Failed to update tokens: ' + updateError.message;
-            betMessage.style.color = 'red';
-            return;
-        }
-
-        // --- UPDATED CODE FOR INSERTS TO PLAYS TABLE ---
-        const { error: playError } = await supabase
-            .from('plays')
-            .insert([{ 
-                dealer_id: dealerId,
-                played_numbers: { [number]: amount },
-                total_spent_tokens: amount,
-                play_date: new Date().toISOString().split('T')[0],
-                play_time: new Date().toLocaleTimeString('en-US', { hour12: false }),
-                baji_slot: baji
-            }]);
-
-        if (playError) {
-            betMessage.textContent = 'Failed to save bet: ' + playError.message;
-            betMessage.style.color = 'red';
-            await supabase.from('dealers').update({ token_balance: dealer.token_balance }).eq('id', dealerId);
-            return;
-        }
-
-        betMessage.textContent = 'Bet placed successfully!';
-        betMessage.style.color = 'green';
-        bettingForm.reset();
-        await updateDealerBalance();
-        await fetchAndDisplaySlips(dealerId);
-    });
-
-    async function fetchAndDisplaySlips(dealerId) {
-        const today = new Date().toISOString().split('T')[0];
-        const { data: plays, error } = await supabase
-            .from('plays')
-            .select('*')
-            .eq('dealer_id', dealerId)
-            .eq('play_date', today)
-            .order('baji_slot', { ascending: true });
-
-        if (error || !plays || plays.length === 0) {
-            slipsContainer.innerHTML = '<p style="text-align: center;">No bets placed today.</p>';
-            return;
-        }
-
-        const { data: results } = await supabase
-            .from('results')
-            .select('*')
-            .eq('date', today);
-
-        slipsContainer.innerHTML = '';
-        plays.forEach(play => {
-            const slip = document.createElement('div');
-            slip.className = 'admin-section';
-            const result = results.find(r => r.slot_id === play.baji_slot);
-            const winningNumber = result ? result.single_number : '-';
-            const playedNumber = Object.keys(play.played_numbers)[0];
-            const betAmount = play.played_numbers[playedNumber];
-            const won = (winningNumber !== '-') && (parseInt(playedNumber) === winningNumber);
-            const prize = won ? (betAmount * 90) : 0;
-            const statusColor = won ? 'green' : 'red';
-            const statusText = won ? 'Congratulations, you won!' : 'Sorry, you lost.';
-            
-            slip.innerHTML = `
-                <h3>${play.baji_slot}th Baji - ${play.play_time}</h3>
-                <p><strong>Your Number:</strong> ${playedNumber} (Tokens: ${betAmount})</p>
-                <p><strong>Winning Number:</strong> ${winningNumber}</p>
-                <p style="color: ${statusColor}; font-weight: bold;">${statusText}</p>
-                <p><strong>Prize Tokens:</strong> ${prize}</p>
-            `;
-            slipsContainer.appendChild(slip);
-        });
-    }
-
-    updateDealerBalance();
-    setupBajiSchedule();
-    fetchAndDisplaySlips(dealerId);
-    
-    setInterval(() => {
-        updateDealerBalance();
-        fetchAndDisplaySlips(dealerId);
-        setupBajiSchedule(); // To update betting status in real-time
-    }, 5000);
 }
 
 // --- Common Functions for Both Panels ---
@@ -665,7 +650,7 @@ async function fetchTodayResults() {
 
 async function fetchOldResults() {
     const { data: results, error } = await supabase
-        .from('old_results') // Changed to fetch from 'old_results' table
+        .from('old_results')
         .select('*')
         .order('date', { ascending: false })
         .limit(100);
@@ -719,3 +704,4 @@ function startLiveAnimation() {
     const dateHeader = document.querySelector('.today-result .date-header');
     dateHeader.classList.add('live-animation');
 }
+
