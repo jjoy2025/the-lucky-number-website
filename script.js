@@ -154,13 +154,15 @@ async function setupAdminPanel() {
             data = todayData;
             error = todayError;
         } else {
-            // Update previous dates' results using the new RPC function
-            const { data: oldData, error: oldError } = await supabase.rpc('update_historical_result', {
-                date_in: date,
-                slot_id_in: baji,
-                patti_in: patti,
-                single_in: single
-            });
+            // Updated code to directly upsert into old_results
+            const { data: oldData, error: oldError } = await supabase
+                .from('old_results')
+                .upsert({ 
+                    date: date, 
+                    slot_id: baji, 
+                    patti_number: patti, 
+                    single_number: single 
+                });
             data = oldData;
             error = oldError;
         }
