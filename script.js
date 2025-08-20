@@ -154,15 +154,13 @@ async function setupAdminPanel() {
             data = todayData;
             error = todayError;
         } else {
-            // Updated code to directly upsert into old_results
-            const { data: oldData, error: oldError } = await supabase
-                .from('old_results')
-                .upsert({ 
-                    date: date, 
-                    slot_id: baji, 
-                    patti_number: patti, 
-                    single_number: single 
-                });
+            // Update previous dates' results using the RPC function
+            const { data: oldData, error: oldError } = await supabase.rpc('update_old_results', {
+                date_in: date,
+                slot_id_in: baji,
+                patti_in: patti,
+                single_in: single
+            });
             data = oldData;
             error = oldError;
         }
@@ -180,7 +178,6 @@ async function setupAdminPanel() {
             if (date === today) {
                 fetchTodayResults();
             } else {
-                // If the date is not today, refresh the old results section.
                 fetchOldResults();
             }
         }
@@ -736,4 +733,3 @@ function startLiveAnimation() {
     const dateHeader = document.querySelector('.today-result .date-header');
     dateHeader.classList.add('live-animation');
 }
-
