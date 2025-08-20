@@ -145,25 +145,26 @@ async function setupAdminPanel() {
 
         let error = null;
         let data = null;
+        let tableToUpdate = null;
 
         if (date === today) {
-            // Update today's results in the 'results' table
-            const { data: todayData, error: todayError } = await supabase
-                .from('results')
-                .upsert({ date, slot_id: baji, patti_number: patti, single_number: single });
-            data = todayData;
-            error = todayError;
+            tableToUpdate = 'results';
         } else {
-            // Update previous dates' results using the RPC function
-            const { data: oldData, error: oldError } = await supabase.rpc('update_old_results', {
-                date_in: date,
-                slot_id_in: baji,
-                patti_in: patti,
-                single_in: single
-            });
-            data = oldData;
-            error = oldError;
+            tableToUpdate = 'old_results';
         }
+
+        // Use upsert on the determined table
+        const { data: resultData, error: resultError } = await supabase
+            .from(tableToUpdate)
+            .upsert({ 
+                date: date, 
+                slot_id: baji, 
+                patti_number: patti, 
+                single_number: single 
+            });
+
+        data = resultData;
+        error = resultError;
 
         if (error) {
             resultMessage.textContent = 'Failed to save result: ' + error.message;
@@ -173,8 +174,7 @@ async function setupAdminPanel() {
             resultMessage.style.color = 'green';
             resultForm.reset();
             
-            // Call this function to update the results on the homepage
-            // if the updated date is today.
+            // Refresh the correct results display
             if (date === today) {
                 fetchTodayResults();
             } else {
