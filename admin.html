@@ -40,96 +40,108 @@
         </section>
 
         <div id="data-entry-section" style="display: none;">
+            
             <div class="tab-buttons">
                 <button class="tab-button active" data-tab="result-entry-tab">Result Entry</button>
                 <button class="tab-button" data-tab="dealer-mgmt-tab">Dealer Management</button>
                 <button class="tab-button" data-tab="reports-tab">Reports</button>
             </div>
 
-            <section id="result-entry-tab" class="admin-section tab-content active">
-                <h2>Enter Today's Result</h2>
-                <form id="result-form">
-                    <div class="form-group">
-                        <label for="date-input">Date</label>
-                        <input type="date" id="date-input" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="baji-select">Baji Slot</label>
-                        <select id="baji-select" required></select>
-                    </div>
-                    <div class="form-group">
-                        <label for="patti-input">Patti Number</label>
-                        <input type="text" id="patti-input" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="single-input">Single Number</label>
-                        <input type="number" id="single-input" min="0" max="9" required>
-                    </div>
-                    <button type="submit">Save Result</button>
-                    <p id="result-message" class="message"></p>
-                </form>
-            </section>
+            <div class="tabs-container">
+                
+                <section id="result-entry-tab" class="admin-section tab-content active">
+                    <h2>Enter Result</h2>
+                    <form id="result-form">
+                        <div class="form-group">
+                            <label for="date-input">Date</label>
+                            <input type="date" id="date-input" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="baji-select">Baji Slot</label>
+                            <select id="baji-select" required></select>
+                        </div>
+                        <div class="form-group">
+                            <label for="patti-input">Patti Number</label>
+                            <input type="text" id="patti-input" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="single-input">Single Number</label>
+                            <input type="number" id="single-input" min="0" max="9" required>
+                        </div>
+                        <button type="submit">Save Result</button>
+                        <p id="result-message" class="message"></p>
+                    </form>
 
-            <section class="admin-section">
-                <h2>Archive Previous Day's Results</h2>
-                <button id="archive-btn">Archive Now</button>
-                <p id="archive-message"></p>
-            </section>
+                    <hr>
 
-            <section id="dealer-mgmt-tab" class="admin-section tab-content">
-                <h2>Add New Dealer</h2>
-                <form id="dealer-form">
-                    <div class="form-group">
-                        <label for="dealer-name">Dealer Name</label>
-                        <input type="text" id="dealer-name" required>
+                    <div class="admin-section-inner">
+                        <h3>Archive Old Results</h3>
+                        <p>Click below to move yesterday's results to the permanent history.</p>
+                        <button id="archive-btn">Archive Now</button>
+                        <p id="archive-message"></p>
                     </div>
-                    <div class="form-group">
-                        <label for="dealer-phone">Phone Number</label>
-                        <input type="tel" id="dealer-phone" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="dealer-password">Password</label>
-                        <input type="password" id="dealer-password" required>
-                    </div>
-                    <button type="submit">Register Dealer</button>
-                    <p id="dealer-message" class="message"></p>
-                </form>
+                </section>
 
-                <hr>
+                <section id="dealer-mgmt-tab" class="admin-section tab-content">
+                    
+                    <div class="admin-section-inner">
+                        <h2>Add New Dealer</h2>
+                        <form id="dealer-form">
+                            <div class="form-group">
+                                <label for="dealer-name">Dealer Name</label>
+                                <input type="text" id="dealer-name" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="dealer-phone">Phone Number</label>
+                                <input type="tel" id="dealer-phone" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="dealer-password">Password</label>
+                                <input type="password" id="dealer-password" required>
+                            </div>
+                            <button type="submit">Register Dealer</button>
+                            <p id="dealer-message" class="message"></p>
+                        </form>
+                    </div>
 
-                <h2>Token Transfer</h2>
-                <form id="token-transfer-form">
+                    <hr>
+
+                    <div class="admin-section-inner">
+                        <h2>Token Transfer</h2>
+                        <form id="token-transfer-form">
+                            <div class="form-group">
+                                <label for="dealer-select">Select Dealer</label>
+                                <select id="dealer-select" required></select>
+                            </div>
+                            <div class="form-group">
+                                <label for="token-amount">Amount</label>
+                                <input type="number" id="token-amount" min="1" required>
+                            </div>
+                            <button type="submit">Transfer Tokens</button>
+                            <p id="token-message" class="message"></p>
+                        </form>
+                    </div>
+                </section>
+                
+                <section id="reports-tab" class="admin-section tab-content">
+                    <h2>Dealer Report</h2>
                     <div class="form-group">
-                        <label for="dealer-select">Select Dealer</label>
-                        <select id="dealer-select" required></select>
+                        <label for="report-dealer-select">Select Dealer</label>
+                        <select id="report-dealer-select" required></select>
                     </div>
                     <div class="form-group">
-                        <label for="token-amount">Amount</label>
-                        <input type="number" id="token-amount" min="1" required>
+                        <label for="report-date-input">Select Date</label>
+                        <input type="date" id="report-date-input" required>
                     </div>
-                    <button type="submit">Transfer Tokens</button>
-                    <p id="token-message" class="message"></p>
-                </form>
-            </section>
-            
-            <section id="reports-tab" class="admin-section tab-content">
-                <h2>Dealer Report</h2>
-                <div class="form-group">
-                    <label for="report-dealer-select">Select Dealer</label>
-                    <select id="report-dealer-select" required></select>
-                </div>
-                <div class="form-group">
-                    <label for="report-date-input">Select Date</label>
-                    <input type="date" id="report-date-input" required>
-                </div>
-                <button id="showReportBtn">Show Report</button>
-                <button id="showGraphBtn">Show Graph</button>
-                <div id="reportContainer"></div>
-                <div id="graphContainer">
-                    <canvas id="myChart" width="400" height="200"></canvas>
-                </div>
-            </section>
+                    <button id="showReportBtn">Show Report</button>
+                    <button id="showGraphBtn">Show Graph</button>
+                    <div id="reportContainer"></div>
+                    <div id="graphContainer">
+                        <canvas id="myChart" width="400" height="200"></canvas>
+                    </div>
+                </section>
 
+            </div>
         </div>
     </main>
     
