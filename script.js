@@ -172,6 +172,12 @@ async function setupAdminPanel() {
             resultMessage.textContent = 'Result saved successfully!';
             resultMessage.style.color = 'green';
             resultForm.reset();
+            
+            // Call this function to update the results on the homepage
+            // if the updated date is today.
+            if (date === today) {
+                fetchTodayResults();
+            }
         }
     });
 
