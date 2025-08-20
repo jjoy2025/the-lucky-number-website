@@ -187,38 +187,20 @@ async function setupAdminPanel() {
         const dealerName = document.getElementById('dealer-name').value;
         const dealerPhone = document.getElementById('dealer-phone').value;
         const dealerPassword = document.getElementById('dealer-password').value;
-
         const dealerMessage = document.getElementById('dealer-message');
+        
         dealerMessage.textContent = 'Adding dealer...';
         dealerMessage.className = 'message';
 
         try {
-            // Step 1: Create a new user using Supabase Admin API
-            const { data: userData, error: userError } = await supabase.auth.admin.createUser({
-                phone: dealerPhone, // Use phone number as identifier
-                password: dealerPassword,
-                user_metadata: { name: dealerName },
-                app_metadata: { role: 'dealer' }
+            const { error: rpcError } = await supabase.rpc('create_dealer', {
+                dealer_name: dealerName,
+                dealer_phone: dealerPhone,
+                dealer_password: dealerPassword
             });
 
-            if (userError) {
-                throw userError;
-            }
-
-            const newUserId = userData.user.id;
-
-            // Step 2: Add a new dealer entry in the 'dealers' table
-            const { error: dealerError } = await supabase.from('dealers').insert([
-                {
-                    name: dealerName,
-                    phone: dealerPhone,
-                    token_balance: 0,
-                    user_id: newUserId
-                },
-            ]);
-
-            if (dealerError) {
-                throw dealerError;
+            if (rpcError) {
+                throw rpcError;
             }
 
             dealerMessage.textContent = 'Dealer added successfully!';
@@ -232,7 +214,7 @@ async function setupAdminPanel() {
             console.error('Error adding dealer:', error);
         }
     });
-
+    
     // --- FINAL CODE FOR TOKEN TRANSFER ---
     tokenTransferForm.addEventListener('submit', async (e) => {
         e.preventDefault();
@@ -367,7 +349,7 @@ async function setupAdminPanel() {
             
             const playedNumbers = Object.keys(play.played_numbers).map(num => `${num}(${play.played_numbers[num]})`).join(', ');
             
-            const prizeTokens = (winningNumber !== '-' && play.played_numbers[winningNumber]) ? play.played_numbers[winningNumber] * 90 : 0;
+            const prizeTokens = (winningNumber !== '-') && (play.played_numbers[winningNumber]) ? play.played_numbers[winningNumber] * 90 : 0;
             const profitLoss = prizeTokens - play.total_spent_tokens;
 
             totalSpent += play.total_spent_tokens;
