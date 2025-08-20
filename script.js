@@ -56,6 +56,8 @@ async function setupAdminPanel() {
     const showGraphBtn = document.getElementById('showGraphBtn');
     const reportContainer = document.getElementById('reportContainer');
     const graphContainer = document.getElementById('graphContainer');
+    const archiveBtn = document.getElementById('archive-btn');
+    const archiveMessage = document.getElementById('archive-message');
     let myChartInstance = null;
 
     // Populate baji select for admin
@@ -131,17 +133,37 @@ async function setupAdminPanel() {
             }
         }
     });
-
+    
+    // --- FINAL LOGIC FOR UPDATING RESULTS ---
     resultForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         const date = document.getElementById('date-input').value;
         const baji = parseInt(bajiSelectAdmin.value);
         const patti = document.getElementById('patti-input').value;
         const single = parseInt(document.getElementById('single-input').value);
+        const today = new Date().toISOString().split('T')[0];
 
-        const { data, error } = await supabase
-            .from('results')
-            .insert([{ date, slot_id: baji, patti_number: patti, single_number: single }]);
+        let error = null;
+        let data = null;
+
+        if (date === today) {
+            // Update today's results in the 'results' table
+            const { data: todayData, error: todayError } = await supabase
+                .from('results')
+                .upsert({ date, slot_id: baji, patti_number: patti, single_number: single });
+            data = todayData;
+            error = todayError;
+        } else {
+            // Update previous dates' results using the new RPC function
+            const { data: oldData, error: oldError } = await supabase.rpc('update_historical_result', {
+                date_in: date,
+                slot_id_in: baji,
+                patti_in: patti,
+                single_in: single
+            });
+            data = oldData;
+            error = oldError;
+        }
 
         if (error) {
             resultMessage.textContent = 'Failed to save result: ' + error.message;
@@ -207,6 +229,23 @@ async function setupAdminPanel() {
             await populateDealers();
         }
     });
+    
+    // --- Logic for Archive Button ---
+    if (archiveBtn) {
+        archiveBtn.addEventListener('click', async () => {
+            archiveMessage.textContent = 'Archiving...';
+            const { error } = await supabase.rpc('archive_daily_results');
+            if (error) {
+                archiveMessage.textContent = 'Archiving failed: ' + error.message;
+                archiveMessage.style.color = 'red';
+            } else {
+                archiveMessage.textContent = 'Previous day\'s results archived successfully!';
+                archiveMessage.style.color = 'green';
+                fetchTodayResults();
+                fetchOldResults();
+            }
+        });
+    }
 
     async function populateDealers() {
         const { data: dealers, error } = await supabase
