@@ -63,8 +63,36 @@ h1, h2 {
     margin-bottom: 20px;
     position: relative;
     overflow: hidden;
+    display: flex; /* Added for alignment */
+    justify-content: center; /* Added for alignment */
+    align-items: center; /* Added for alignment */
+    gap: 10px; /* Added for spacing */
 }
 
+.date-header h2 {
+    margin: 0;
+}
+
+/* New: Live Animation */
+.live-animation {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 1.2em;
+    font-weight: bold;
+    color: #000000; /* Use black for contrast */
+}
+
+.blinking-dot {
+    color: #ff0000; /* Red dot */
+    animation: blinker 1s linear infinite;
+}
+
+@keyframes blinker {
+    50% { opacity: 0; }
+}
+
+/* Previous shimmer animation (kept in case it's used elsewhere) */
 .date-header.live-animation::before {
     content: '';
     position: absolute;
@@ -84,6 +112,7 @@ h1, h2 {
         transform: translateX(100%);
     }
 }
+
 
 .results-grid {
     display: grid;
@@ -367,4 +396,67 @@ hr {
 
 #reportContainer tr:nth-child(even) {
     background-color: #34495e;
+}
+
+/* New: Patti Chart Styles */
+.lucky-number-patti-list {
+    margin: 20px auto;
+    max-width: 95%; /* Adjust width to fit container */
+    text-align: center;
+    color: #ffffff;
+    padding: 20px;
+}
+
+.lucky-number-patti-list h2 {
+    margin-bottom: 20px;
+    font-size: 1.5em;
+    color: #FFD700; /* Yellow */
+}
+
+.patti-chart-container {
+    background: linear-gradient(135deg, #1f1f1f, #333333);
+    border: 1px solid #FFD700;
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+    overflow-x: auto;
+}
+
+.patti-table {
+    display: inline-block;
+    min-width: 100%;
+}
+
+.patti-table table {
+    width: 100%;
+    border-collapse: collapse;
+    color: #ffffff;
+}
+
+.patti-table th, .patti-table td {
+    padding: 10px;
+    border: 1px solid #444;
+    text-align: center;
+    font-size: 0.9em;
+}
+
+.patti-table thead th {
+    background-color: #FFD700;
+    color: #000000;
+    font-weight: bold;
+}
+
+.patti-table tbody tr:nth-child(even) {
+    background-color: #222;
+}
+
+.patti-table tbody tr:hover {
+    background-color: #444;
+}
+
+/* Adjustments for the main content to center it */
+.main-container {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 20px;
 }
