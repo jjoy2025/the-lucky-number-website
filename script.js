@@ -179,6 +179,9 @@ async function setupAdminPanel() {
             // if the updated date is today.
             if (date === today) {
                 fetchTodayResults();
+            } else {
+                // If the date is not today, refresh the old results section.
+                fetchOldResults();
             }
         }
     });
@@ -733,3 +736,4 @@ function startLiveAnimation() {
     const dateHeader = document.querySelector('.today-result .date-header');
     dateHeader.classList.add('live-animation');
 }
+
