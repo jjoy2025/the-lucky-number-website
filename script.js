@@ -72,8 +72,6 @@ async function setupAdminPanel() {
 
     // Check if admin is logged in
     if (session) {
-        // We will assume a logged-in user with a session is an admin for this simplified example
-        // For production, you should use user_metadata or another table to verify admin status
         loginSection.style.display = 'none';
         dataEntrySection.style.display = 'block';
         logoutBtn.style.display = 'block';
@@ -120,7 +118,6 @@ async function setupAdminPanel() {
 
         const { data: { user } } = await supabase.auth.getUser();
         if (user) {
-            // Check if the user is a dealer by looking for their user_id in the dealers table
             const { data: dealerData, error: dealerError } = await supabase
                 .from('dealers')
                 .select('id')
@@ -128,11 +125,8 @@ async function setupAdminPanel() {
                 .single();
             
             if (dealerData) {
-                // If a dealer exists with this user_id, redirect to their dashboard
                 window.location.href = `dealer-dashboard.html?dealerId=${dealerData.id}`;
             } else {
-                // Otherwise, assume it's an admin and stay on the admin page
-                // For a more robust solution, you should use Supabase user_metadata or an admin table.
                 window.location.href = 'admin.html';
             }
         }
@@ -167,28 +161,15 @@ async function setupAdminPanel() {
         const password = document.getElementById('dealer-password').value;
         dealerMessage.textContent = '';
 
-        // Create a Supabase Auth user first
-        const { data: authData, error: authError } = await supabase.auth.signUp({
-            email: phone + "@yourdomain.com", // Use phone number as a unique part of the email
-            password: password,
+        const { data, error } = await supabase.rpc('add_new_dealer', { 
+            name_in: name,
+            phone_in: phone,
+            password_in: password
         });
-
-        if (authError) {
-            dealerMessage.textContent = 'Failed to create user: ' + authError.message;
-            dealerMessage.style.color = 'red';
-            return;
-        }
-
-        // Then, insert the dealer details into the `dealers` table
-        const { data, error } = await supabase
-            .from('dealers')
-            .insert([{ user_id: authData.user.id, name: name, phone_number: phone, token_balance: 0 }]);
         
         if (error) {
-            dealerMessage.textContent = 'Failed to add dealer to database: ' + error.message;
+            dealerMessage.textContent = 'Failed to add dealer: ' + error.message;
             dealerMessage.style.color = 'red';
-            // It's good practice to delete the auth user if this fails
-            await supabase.auth.admin.deleteUser(authData.user.id);
         } else {
             dealerMessage.textContent = 'Dealer added successfully!';
             dealerMessage.style.color = 'green';
@@ -210,20 +191,20 @@ async function setupAdminPanel() {
             return;
         }
 
-        // Call the secure RPC function
-        const { data: updateData, error: updateError } = await supabase
-            .rpc('transfer_tokens', { dealer_id_in: dealerId, amount_in: amount });
+        const { data, error } = await supabase.rpc('transfer_tokens_secure', {
+            dealer_id_in: dealerId,
+            amount_in: amount
+        });
         
-        if (updateError) {
-            tokenMessage.textContent = 'Failed to transfer tokens: ' + updateError.message;
+        if (error) {
+            tokenMessage.textContent = 'Failed to transfer tokens: ' + error.message;
             tokenMessage.style.color = 'red';
-            console.error('Database function call failed:', updateError);
+            console.error('Database function call failed:', error);
         } else {
             tokenMessage.textContent = 'Tokens transferred successfully!';
             tokenMessage.style.color = 'green';
             tokenTransferForm.reset();
             await populateDealers();
-            await populateDealerReportSelect();
         }
     });
 
@@ -518,7 +499,6 @@ async function setupDealerDashboard() {
                 return;
             }
 
-            // Call the secure RPC function
             const { error: rpcError } = await supabase.rpc('place_bet', {
                 dealer_id_in: dealerId,
                 baji_slot_in: baji,
