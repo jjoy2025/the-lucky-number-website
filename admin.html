@@ -3,106 +3,138 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>The Lucky Number - Admin Panel</title>
+    <title>Admin Dashboard - The Lucky Number</title>
     <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="admin.css">
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
 <body>
 
-    <header class="header">
-        <div class="header-right">
-            <button id="logout-btn" style="display:none;">Logout</button>
+    <header class="admin-header">
+        <div class="header-logo">
+            <img src="https://i.ibb.co/6P01j4k/Untitled-design-2.png" alt="Logo">
+        </div>
+        <div class="header-title">
+            <h1>Admin Panel</h1>
+        </div>
+        <div class="header-buttons">
+            <button id="logout-btn" style="display: none;">Logout</button>
         </div>
     </header>
 
-    <main class="container">
+    <main class="admin-container">
         
         <section id="login-section" class="admin-section">
-            <h2>Login</h2>
+            <h2>Admin Login</h2>
             <form id="common-login-form">
-                <label for="email-input">Email:</label>
-                <input type="email" id="email-input" required>
-                <label for="password-input">Password:</label>
-                <input type="password" id="password-input" required>
+                <div class="form-group">
+                    <label for="email-input">Email</label>
+                    <input type="email" id="email-input" required>
+                </div>
+                <div class="form-group">
+                    <label for="password-input">Password</label>
+                    <input type="password" id="password-input" required>
+                </div>
                 <button type="submit">Login</button>
                 <p id="auth-error" class="error-message"></p>
             </form>
         </section>
 
-        <div id="data-entry-section" class="admin-panel" style="display:none;">
-            <div class="tabs">
-                <button class="tab-button active" data-tab="results-tab">Update Results</button>
-                <button class="tab-button" data-tab="dealers-tab">Manage Dealers</button>
+        <div id="data-entry-section" style="display: none;">
+            <div class="tab-buttons">
+                <button class="tab-button active" data-tab="result-entry-tab">Result Entry</button>
+                <button class="tab-button" data-tab="dealer-mgmt-tab">Dealer Management</button>
                 <button class="tab-button" data-tab="reports-tab">Reports</button>
             </div>
 
-            <div id="results-tab" class="tab-content active">
-                <section class="admin-section">
-                    <h2>Update Results</h2>
-                    <form id="result-form">
-                        <label for="date-input">Date:</label>
+            <section id="result-entry-tab" class="admin-section tab-content active">
+                <h2>Enter Today's Result</h2>
+                <form id="result-form">
+                    <div class="form-group">
+                        <label for="date-input">Date</label>
                         <input type="date" id="date-input" required>
-                        <label for="baji-select">Baji:</label>
+                    </div>
+                    <div class="form-group">
+                        <label for="baji-select">Baji Slot</label>
                         <select id="baji-select" required></select>
-                        <label for="patti-input">Patti:</label>
+                    </div>
+                    <div class="form-group">
+                        <label for="patti-input">Patti Number</label>
                         <input type="text" id="patti-input" required>
-                        <label for="single-input">Single:</label>
+                    </div>
+                    <div class="form-group">
+                        <label for="single-input">Single Number</label>
                         <input type="number" id="single-input" min="0" max="9" required>
-                        <button type="submit">Update</button>
-                        <p id="result-message"></p>
-                    </form>
-                </section>
-            </div>
+                    </div>
+                    <button type="submit">Save Result</button>
+                    <p id="result-message" class="message"></p>
+                </form>
+            </section>
 
-            <div id="dealers-tab" class="tab-content">
-                <section class="admin-section">
-                    <h2>Add Dealer</h2>
-                    <form id="dealer-form">
-                        <label for="dealer-name">Name:</label>
+            <section class="admin-section">
+                <h2>Archive Previous Day's Results</h2>
+                <button id="archive-btn">Archive Now</button>
+                <p id="archive-message"></p>
+            </section>
+
+            <section id="dealer-mgmt-tab" class="admin-section tab-content">
+                <h2>Add New Dealer</h2>
+                <form id="dealer-form">
+                    <div class="form-group">
+                        <label for="dealer-name">Dealer Name</label>
                         <input type="text" id="dealer-name" required>
-                        <label for="dealer-phone">Phone Number:</label>
-                        <input type="text" id="dealer-phone" required>
-                        <label for="dealer-password">Password:</label>
+                    </div>
+                    <div class="form-group">
+                        <label for="dealer-phone">Phone Number</label>
+                        <input type="tel" id="dealer-phone" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="dealer-password">Password</label>
                         <input type="password" id="dealer-password" required>
-                        <button type="submit">Add Dealer</button>
-                        <p id="dealer-message"></p>
-                    </form>
-                </section>
+                    </div>
+                    <button type="submit">Register Dealer</button>
+                    <p id="dealer-message" class="message"></p>
+                </form>
 
-                <section class="admin-section">
-                    <h2>Transfer Tokens</h2>
-                    <form id="token-transfer-form">
-                        <label for="dealer-select">Dealer:</label>
+                <hr>
+
+                <h2>Token Transfer</h2>
+                <form id="token-transfer-form">
+                    <div class="form-group">
+                        <label for="dealer-select">Select Dealer</label>
                         <select id="dealer-select" required></select>
-                        <label for="token-amount">Token Amount:</label>
+                    </div>
+                    <div class="form-group">
+                        <label for="token-amount">Amount</label>
                         <input type="number" id="token-amount" min="1" required>
-                        <button type="submit">Transfer Tokens</button>
-                        <p id="token-message"></p>
-                    </form>
-                </section>
-            </div>
-
-            <div id="reports-tab" class="tab-content">
-                <section class="admin-section">
-                    <h2>Reports & Graph</h2>
-                    <form id="report-form">
-                        <label for="report-dealer-select">Dealer:</label>
-                        <select id="report-dealer-select"></select>
-                        <label for="report-date-input">Date:</label>
-                        <input type="date" id="report-date-input" required>
-                        <button type="button" id="showReportBtn">View Report</button>
-                        <button type="button" id="showGraphBtn">View Graph</button>
-                    </form>
-                </section>
-                <div id="reportContainer" class="admin-section"></div>
-                <div id="graphContainer" class="admin-section">
-                    <canvas id="myChart"></canvas>
+                    </div>
+                    <button type="submit">Transfer Tokens</button>
+                    <p id="token-message" class="message"></p>
+                </form>
+            </section>
+            
+            <section id="reports-tab" class="admin-section tab-content">
+                <h2>Dealer Report</h2>
+                <div class="form-group">
+                    <label for="report-dealer-select">Select Dealer</label>
+                    <select id="report-dealer-select" required></select>
                 </div>
-            </div>
+                <div class="form-group">
+                    <label for="report-date-input">Select Date</label>
+                    <input type="date" id="report-date-input" required>
+                </div>
+                <button id="showReportBtn">Show Report</button>
+                <button id="showGraphBtn">Show Graph</button>
+                <div id="reportContainer"></div>
+                <div id="graphContainer">
+                    <canvas id="myChart" width="400" height="200"></canvas>
+                </div>
+            </section>
+
         </div>
     </main>
+    
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="script.js"></script>
 </body>
 </html>
