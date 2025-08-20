@@ -5,36 +5,92 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>The Lucky Number</title>
     <link rel="stylesheet" href="style.css">
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
 <body>
 
-    <header class="header">
-        <h1>The Lucky Number</h1>
-        <div class="header-right">
-            <a href="admin.html" id="login-link">Login</a>
+    <header class="main-header">
+        <div class="header-logo">
+            <img src="https://i.ibb.co/6P01j4k/Untitled-design-2.png" alt="Logo">
+        </div>
+        <div class="header-title">
+            <h1>The Lucky Number</h1>
+        </div>
+        <div class="header-buttons">
+            <a href="#" id="login-link">Login</a>
         </div>
     </header>
 
-    <main class="container">
-
+    <main class="main-container">
+        
         <section class="today-result">
-            <h2 class="date-header">
-                <span class="live-dot"></span> LIVE Today's Results <span id="current-date"></span>
-            </h2>
+            <div class="date-header">
+                <h2>Today's Result</h2>
+                <span id="current-date"></span>
+            </div>
             <div class="results-grid">
                 </div>
+        </section>
+
+        <section class="result-schedule-container">
+            <h2>Result Time Schedule</h2>
+            <table class="schedule-table">
+                <thead>
+                    <tr>
+                        <th class="table-header">BAJI</th>
+                        <th class="table-header">RESULT TIME</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr class="table-row">
+                        <td>1st Baji</td>
+                        <td>11:00 AM</td>
+                    </tr>
+                    <tr class="table-row">
+                        <td>2nd Baji</td>
+                        <td>12:30 PM</td>
+                    </tr>
+                    <tr class="table-row">
+                        <td>3rd Baji</td>
+                        <td>2:00 PM</td>
+                    </tr>
+                    <tr class="table-row">
+                        <td>4th Baji</td>
+                        <td>3:30 PM</td>
+                    </tr>
+                    <tr class="table-row">
+                        <td>5th Baji</td>
+                        <td>5:00 PM</td>
+                    </tr>
+                    <tr class="table-row">
+                        <td>6th Baji</td>
+                        <td>6:30 PM</td>
+                    </tr>
+                    <tr class="table-row">
+                        <td>7th Baji</td>
+                        <td>8:00 PM</td>
+                    </tr>
+                    <tr class="table-row">
+                        <td>8th Baji</td>
+                        <td>9:00 PM</td>
+                    </tr>
+                </tbody>
+            </table>
         </section>
 
         <section class="old-results">
             <h2>Previous Results</h2>
             <div class="old-results-container">
-                <p>Loading... Previous results</p>
-            </div>
+                </div>
         </section>
-
+        
     </main>
+
+    <footer>
+        <p>&copy; 2025 The Lucky Number</p>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="script.js"></script>
 </body>
 </html>
