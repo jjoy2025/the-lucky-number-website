@@ -1,6 +1,6 @@
 // Your Supabase URL and anon (public) Key go here.
 const SUPABASE_URL = "https://urjcuxavrkyqttwtqvjx.supabase.co";
-const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVyamN1eGF2cmt5cXR0d3Rxdmp4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU0MDI5NDIsImV4cCI6MjA3MDk3ODk0Mn0._HzIlEtRtwnsssFGonEqrHcqBm9WtXAx7bWa6S-9ErQ";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVyamN1eGF2cmt5cXR0d3Rxdmp4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU0MDI5NDIsImV4cCI6MjA3MDk3ODk0Mn0._HzIlEtRtwnsssFGonEqrHcqBm9WtXAx7bWa6S-9ErO";
 
 // Supabase library is loaded directly.
 const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -178,26 +178,52 @@ async function setupAdminPanel() {
     // --- FINAL LOGIC FOR ADDING DEALER ---
     dealerForm.addEventListener('submit', async (e) => {
         e.preventDefault();
-        const name = document.getElementById('dealer-name').value;
-        const phone = document.getElementById('dealer-phone').value;
-        const password = document.getElementById('dealer-password').value;
-        dealerMessage.textContent = '';
+        const dealerName = document.getElementById('dealer-name').value;
+        const dealerPhone = document.getElementById('dealer-phone').value;
+        const dealerPassword = document.getElementById('dealer-password').value;
 
-        const { data, error } = await supabase.rpc('add_new_dealer', { 
-            name_in: name,
-            phone_in: phone,
-            password_in: password
-        });
-        
-        if (error) {
-            dealerMessage.textContent = 'Failed to add dealer: ' + error.message;
-            dealerMessage.style.color = 'red';
-        } else {
+        const dealerMessage = document.getElementById('dealer-message');
+        dealerMessage.textContent = 'Adding dealer...';
+        dealerMessage.className = 'message';
+
+        try {
+            // Step 1: Create a new user using Supabase Admin API
+            const { data: userData, error: userError } = await supabase.auth.admin.createUser({
+                phone: dealerPhone, // Use phone number as identifier
+                password: dealerPassword,
+                user_metadata: { name: dealerName },
+                app_metadata: { role: 'dealer' }
+            });
+
+            if (userError) {
+                throw userError;
+            }
+
+            const newUserId = userData.user.id;
+
+            // Step 2: Add a new dealer entry in the 'dealers' table
+            const { error: dealerError } = await supabase.from('dealers').insert([
+                {
+                    name: dealerName,
+                    phone: dealerPhone,
+                    token_balance: 0,
+                    user_id: newUserId
+                },
+            ]);
+
+            if (dealerError) {
+                throw dealerError;
+            }
+
             dealerMessage.textContent = 'Dealer added successfully!';
-            dealerMessage.style.color = 'green';
-            dealerForm.reset();
+            dealerMessage.className = 'message success-message';
+            document.getElementById('dealer-form').reset();
             await populateDealers();
             await populateDealerReportSelect();
+        } catch (error) {
+            dealerMessage.textContent = `Failed to add dealer: ${error.message}`;
+            dealerMessage.className = 'message error-message';
+            console.error('Error adding dealer:', error);
         }
     });
 
