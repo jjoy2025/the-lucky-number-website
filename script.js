@@ -141,42 +141,41 @@ async function setupAdminPanel() {
         const baji = parseInt(bajiSelectAdmin.value);
         const patti = document.getElementById('patti-input').value;
         const single = parseInt(document.getElementById('single-input').value);
+        
+        // Get today's date in YYYY-MM-DD format
         const today = new Date().toISOString().split('T')[0];
 
-        let error = null;
-        let data = null;
+        let tableToUpdate = null;
 
+        // Determine which table to update based on the date
         if (date === today) {
-            // Update today's results in the 'results' table
-            const { data: todayData, error: todayError } = await supabase
-                .from('results')
-                .upsert({ date, slot_id: baji, patti_number: patti, single_number: single });
-            data = todayData;
-            error = todayError;
+            tableToUpdate = 'results';
         } else {
-            // Update previous dates' results using the new RPC function
-            const { data: oldData, error: oldError } = await supabase.rpc('update_historical_result', {
-                date_in: date,
-                slot_id_in: baji,
-                patti_in: patti,
-                single_in: single
-            });
-            data = oldData;
-            error = oldError;
+            tableToUpdate = 'old_results';
         }
 
-        if (error) {
-            resultMessage.textContent = 'Failed to save result: ' + error.message;
+        const { error: resultError } = await supabase
+            .from(tableToUpdate)
+            .upsert({ 
+                date: date, 
+                slot_id: baji, 
+                patti_number: patti, 
+                single_number: single 
+            });
+
+        if (resultError) {
+            resultMessage.textContent = 'Failed to save result: ' + resultError.message;
             resultMessage.style.color = 'red';
         } else {
             resultMessage.textContent = 'Result saved successfully!';
             resultMessage.style.color = 'green';
             resultForm.reset();
             
-            // Call this function to update the results on the homepage
-            // if the updated date is today.
+            // Refresh the correct results display
             if (date === today) {
                 fetchTodayResults();
+            } else {
+                fetchOldResults();
             }
         }
     });
