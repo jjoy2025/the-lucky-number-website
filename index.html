@@ -6,20 +6,20 @@
   <meta name="viewport" content="width=1024" />
   <title>The Lucky Number</title>
 
-  <!-- Your existing CSS -->
   <link rel="stylesheet" href="style.css" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
 
-  <!-- Google AdSense Auto Ads script (Auto Ads only) -->
+  <!-- Google AdSense Auto Ads script -->
   <script async
     src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3081004120797990"
     crossorigin="anonymous"></script>
 
-  <!-- Patti List fix: scoped, safe overrides (no red) -->
   <style>
-    /* wrapper so this CSS only targets the patti list area */
+    /* Patti List Fix */
     .patti-chart-container {
       margin-top: 10px;
+      max-height: 500px; /* ✅ টেবিল কেটে না যাওয়ার জন্য height fix */
+      overflow-y: auto;
     }
 
     .patti-scroll {
@@ -117,7 +117,7 @@
       <div class="old-results-container"></div>
     </section>
 
-    <!-- ✅ Perfectly aligned Patti List -->
+    <!-- ✅ Corrected Patti List -->
     <section class="lucky-number-patti-list">
       <h2>Lucky Number Patti List</h2>
 
@@ -130,7 +130,6 @@
               </colgroup>
               <thead>
                 <tr>
-                  <th>0</th>
                   <th>1</th>
                   <th>2</th>
                   <th>3</th>
@@ -140,15 +139,15 @@
                   <th>7</th>
                   <th>8</th>
                   <th>9</th>
+                  <th>0</th>
                   <th>000</th>
                 </tr>
               </thead>
               <tbody>
-                <!-- Your table rows (unchanged) -->
                 <tr><td>100</td><td>200</td><td>300</td><td>400</td><td>500</td><td>600</td><td>700</td><td>800</td><td>900</td><td>000</td></tr>
                 <tr><td>678</td><td>345</td><td>120</td><td>789</td><td>456</td><td>123</td><td>890</td><td>567</td><td>234</td><td>127</td></tr>
                 <tr><td>777</td><td>444</td><td>111</td><td>888</td><td>555</td><td>222</td><td>999</td><td>666</td><td>333</td><td>190</td></tr>
-                <!-- ... rest of your rows ... -->
+                <!-- 👉 আপনার বাকি রো এখানে যাবে -->
               </tbody>
             </table>
           </div>
@@ -162,7 +161,6 @@
     <p>&copy; 2025 The Lucky Number</p>
   </footer>
 
-  <!-- Your existing scripts -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="script.js"></script>
 </body>
