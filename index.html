@@ -23,7 +23,7 @@
     /* Patti List Fix */
     .patti-chart-container {
       margin-top: 10px;
-      max-height: 500px; /* ✅ টেবিল কেটে না যাওয়ার জন্য height fix */
+      max-height: 500px;
       overflow-y: auto;
     }
 
@@ -74,6 +74,28 @@
       margin-bottom: 8px;
       text-align: center;
     }
+
+    /* New styles for the blinking Today Tips button */
+    @keyframes blink {
+      0% { opacity: 1; }
+      50% { opacity: 0; }
+      100% { opacity: 1; }
+    }
+
+    .blinking-text {
+      animation: blink 1s infinite;
+      color: #ffeb3b;
+      font-weight: bold;
+    }
+
+    .schedule-grid .schedule-item .result-time.tips-btn {
+      color: #fff;
+      background-color: #007bff;
+      padding: 5px 10px;
+      border-radius: 5px;
+      text-decoration: none;
+      font-size: 1em;
+    }
   </style>
 </head>
 <body>
@@ -120,7 +142,13 @@
                 <span class="result-time" style="color: #25D366; font-size: 1.2em;"><i class="fab fa-whatsapp"></i> Channel</span>
             </a>
         </div>
-      </div>
+        <div class="schedule-item">
+          <span class="baji-name">Get Our</span>
+          <a href="tip.html" target="_blank" style="text-decoration: none;">
+              <span class="result-time tips-btn"><span class="blinking-text">Today Tips</span></span>
+          </a>
+        </div>
+        </div>
     </section>
 
     <section class="old-results">
@@ -185,13 +213,41 @@
   </main>
 
   <footer style="padding:25px; background:#1a1a1a; color:#ddd; text-align:center; font-size:15px; line-height:1.7;">
-    <div class="disclaimer" style="max-width:900px; margin:0 auto 20px auto; padding:15px; background:#2a2a2a; border-radius:8px; box-shadow:0 0 8px rgba(0,0,0,0.4);">
+    <div class="game-rules" style="max-width:900px; margin:0 auto 20px auto; padding:15px; background:#2a2a2a; border-radius:8px; box-shadow:0 0 8px rgba(0,0,0,0.4);">
+      <h3 style="margin-bottom:10px; font-size:1.4em; color:#fff;">Game Rules</h3>
       <p style="margin-bottom:10px;">
-        <strong>দায়স্বীকার (Disclaimer):</strong> এই ওয়েবসাইটে প্রদর্শিত সমস্ত তথ্য শুধুমাত্র বিনোদন ও তথ্যগত উদ্দেশ্যে প্রদান করা হয়েছে। 
-        এখানে কোনো প্রকার অনলাইন গেম, জুয়া, বেটিং বা টাকা লেনদেনের ব্যবস্থা নেই এবং আমরা কোনো জুয়া বা বেটিং কার্যক্রমকে প্রমোট করি না। 
-        ভারতের আইন অনুযায়ী অনলাইন জুয়া ও বেটিং বেআইনি। তাই এই সাইটকে শুধুমাত্র বিনোদনের উদ্দেশ্যে ব্যবহার করুন।
+        This game is based on <strong>Single Numbers</strong> and <strong>Multi Numbers</strong>.
       </p>
-      <p>
+      <ul style="list-style-type: none; padding-left: 0; text-align: left; margin-bottom: 10px;">
+        <li style="margin-bottom: 5px;">
+          <strong style="color:#f5c400;">Single Number:</strong> Any number between <em>0-9</em>.
+        </li>
+        <li style="margin-bottom: 5px;">
+          <strong style="color:#f5c400;">Multi Number:</strong> Any three-digit number chosen from the provided list of candidates.
+        </li>
+      </ul>
+      <p style="margin-bottom:10px;">
+        <strong style="color:#f5c400;">How results are calculated:</strong><br/>
+        If the Single Number result is <em>3</em>, then the Multi Number will be something like <em>580</em> or <em>346</em>.
+      </p>
+      <p style="margin-bottom:10px;">
+        <strong>For example:</strong><br/>
+        <em>5 + 8 + 0 = 13 → Single digit = 3</em><br/>
+        <em>3 + 4 + 6 = 13 → Last digit = 3</em>
+      </p>
+      <p style="margin-bottom:10px;">
+        The sum of all digits is calculated, and if it matches the Single Number, that is the winning number. If a double-digit result appears, the <strong>last digit</strong> or <strong>last digit</strong> will be considered the winning number.
+      </p>
+      <p style="margin-bottom:10px;">
+        <strong style="color:#f5c400;">System of play:</strong><br/>
+        You think of a number in advance, and at the scheduled game time the website will calculate and display the winning numbers. The Multi Number is shown on top, and the Single Number is shown below. This game is designed to enhance your mathematical calculation skills.
+      </p>
+      <p style="margin-top:20px; color:#aaa;">
+        This is a hypothetical game for entertainment purposes only, and it does not involve any real money.
+      </p>
+    </div>
+    <div class="disclaimer" style="max-width:900px; margin:0 auto 20px auto; padding:15px; background:#2a2a2a; border-radius:8px; box-shadow:0 0 8px rgba(0,0,0,0.4);">
+      <p style="font-size:13px; line-height:1.5;">
         <strong>Disclaimer:</strong> All information displayed on this website is provided strictly for entertainment and informational purposes only. 
         No online games, gambling, betting, or monetary transactions are offered here, and we do not promote or encourage any form of gambling or betting. 
         As per Indian law, online gambling and betting are illegal. Please use this site for entertainment purposes only.
