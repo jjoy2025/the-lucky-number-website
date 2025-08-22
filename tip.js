@@ -1,64 +1,178 @@
-// Show today's date
-const dateElement = document.getElementById("current-date");
-const today = new Date();
-dateElement.textContent = today.toDateString();
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Today Tips - The Lucky Number</title>
 
-// Betting times (example: 8 results per day)
-const betTimes = [
-  "10:30", "12:00", "01:30", "03:00",
-  "04:30", "06:00", "07:30", "09:00"
-];
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3081004120797990" crossorigin="anonymous"></script>
 
-// Generate daily random tips (different each day)
-function generateDailyTips() {
-  const seed = today.toDateString(); // unique per day
-  const randomNumbers = [];
-
-  for (let i = 0; i < betTimes.length; i++) {
-    // Generate 4 unique numbers between 0–9
-    const nums = new Set();
-    while (nums.size < 4) {
-      nums.add(Math.floor(Math.random() * 10));
+  <link rel="stylesheet" href="tip.css">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #1a1a1a;
+      color: #fff;
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
     }
-    randomNumbers.push([...nums]);
-  }
 
-  return randomNumbers;
-}
-
-const tips = generateDailyTips();
-const container = document.getElementById("tips-container");
-
-betTimes.forEach((time, index) => {
-  const tipBox = document.createElement("div");
-  tipBox.className = "tip-box";
-
-  const timeElem = document.createElement("div");
-  timeElem.className = "tip-time";
-  timeElem.textContent = `Time: ${time}`;
-
-  const resultElem = document.createElement("div");
-  resultElem.className = "tip-result";
-
-  // calculate the show time (40 min before bet time)
-  const [hours, minutes] = time.split(":").map(Number);
-  const betDate = new Date(today);
-  betDate.setHours(hours, minutes, 0, 0);
-  const showTime = new Date(betDate.getTime() - 40 * 60000);
-
-  function updateResult() {
-    const now = new Date();
-    if (now >= showTime) {
-      resultElem.textContent = `Tips: ${tips[index].join(", ")}`;
-    } else {
-      resultElem.textContent = "Calculating...";
+    .header {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 15px;
+      background-color: #2a2a2a;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+      position: sticky;
+      top: 0;
+      z-index: 100;
     }
-  }
 
-  updateResult();
-  setInterval(updateResult, 10000); // check every 10 sec
+    .back-btn {
+      background-color: #f5c400;
+      color: #111;
+      border: none;
+      padding: 10px 20px;
+      font-size: 16px;
+      font-weight: bold;
+      border-radius: 5px;
+      cursor: pointer;
+      text-decoration: none;
+      transition: background-color 0.3s ease;
+    }
 
-  tipBox.appendChild(timeElem);
-  tipBox.appendChild(resultElem);
-  container.appendChild(tipBox);
-});
+    .back-btn:hover {
+      background-color: #e0b300;
+    }
+
+    .live-section {
+      text-align: center;
+      padding: 15px;
+      background-color: #2a2a2a;
+      margin-top: 10px;
+      border-radius: 8px;
+    }
+
+    .live-section h2 {
+      margin: 0;
+      font-size: 1.5em;
+      color: #fff;
+    }
+
+    .live-section .dot {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      background-color: #00ff00;
+      border-radius: 50%;
+      margin-left: 8px;
+      animation: pulse 1.5s infinite;
+    }
+
+    @keyframes pulse {
+      0% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.2); opacity: 0.7; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+
+    #current-date {
+      font-size: 0.9em;
+      color: #ccc;
+      margin: 5px 0 0;
+    }
+
+    .lucky-title {
+      text-align: center;
+      padding: 20px;
+    }
+
+    .lucky-title h1 {
+      margin: 0;
+      font-size: 2em;
+      color: #f5c400;
+    }
+
+    .tips-container {
+      padding: 20px;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    .tip-card {
+      background-color: #2a2a2a;
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+      text-align: center;
+    }
+
+    .tip-card h3 {
+      color: #f5c400;
+      margin-top: 0;
+    }
+
+    .tip-card .numbers {
+      font-size: 2em;
+      font-weight: bold;
+      letter-spacing: 2px;
+      margin: 15px 0;
+    }
+
+    .tip-card .numbers span {
+      background-color: #3a3a3a;
+      padding: 8px 15px;
+      border-radius: 5px;
+      display: inline-block;
+      margin: 5px;
+    }
+
+    /* Media Queries for Mobile Responsiveness */
+    @media (max-width: 768px) {
+      .header {
+        padding: 10px;
+      }
+      .back-btn {
+        padding: 8px 15px;
+        font-size: 14px;
+      }
+      .lucky-title h1 {
+        font-size: 1.5em;
+      }
+      .tips-container {
+        padding: 10px;
+      }
+      .tip-card {
+        padding: 15px;
+      }
+      .tip-card .numbers {
+        font-size: 1.5em;
+      }
+      .tip-card .numbers span {
+        padding: 6px 12px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <button class="back-btn" onclick="window.location.href='index.html'">← Back to Results</button>
+  </div>
+
+  <div class="live-section">
+    <h2>LIVE <span class="dot"></span></h2>
+    <p id="current-date"></p>
+  </div>
+
+  <div class="lucky-title">
+    <h1>The Lucky Number</h1>
+  </div>
+
+  <div class="tips-container" id="tips-container">
+    </div>
+
+  <script src="tip.js"></script>
+</body>
+</html>
