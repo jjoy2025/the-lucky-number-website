@@ -30,45 +30,24 @@
       margin-top: 20px;
     }
 
+    .date-display {
+      font-size: 1.1em;
+      color: #fff;
+      margin-top: 10px;
+    }
+
     .tips-title {
       font-size: 1.8em;
       color: #c269c5;
       margin: 20px 0;
     }
-
-    .loading-text {
-      font-size: 1.2em;
-      color: #fff;
-    }
-
-    .back-btn-container {
-      margin-top: 30px;
-    }
-
-    .back-btn {
-      background-color: #f5c400;
-      color: #111;
-      border: none;
-      padding: 12px 30px;
-      font-size: 16px;
-      font-weight: bold;
-      border-radius: 8px;
-      cursor: pointer;
-      text-decoration: none;
-      display: inline-block;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
-    }
-
-    .back-btn:hover {
-      background-color: #e0b300;
-    }
-
-    /* Styles for the tips list based on the second screenshot */
+    
     .tips-list-container {
       background-color: #2c2c2c;
       border-radius: 10px;
       padding: 10px;
       margin-top: 20px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
     }
 
     .tips-list-item {
@@ -95,16 +74,32 @@
       font-weight: bold;
     }
 
-    .live-dot {
-      height: 10px;
-      width: 10px;
-      background-color: red;
-      border-radius: 50%;
-      display: inline-block;
-      margin-right: 5px;
-      animation: blink 1s infinite;
+    .tips-list-item .tips-numbers.calculating {
+        animation: blink 1.5s infinite;
     }
     
+    .back-btn-container {
+      margin-top: 30px;
+    }
+
+    .back-btn {
+      background-color: #f5c400;
+      color: #111;
+      border: none;
+      padding: 12px 30px;
+      font-size: 16px;
+      font-weight: bold;
+      border-radius: 8px;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-block;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+    }
+
+    .back-btn:hover {
+      background-color: #e0b300;
+    }
+
     @keyframes blink {
       0% { opacity: 1; }
       50% { opacity: 0; }
@@ -115,11 +110,10 @@
 <body>
   <div class="container">
     <div class="header-title">THE LUCKY NUMBER</div>
+    <div id="current-date-display" class="date-display"></div>
     <div class="tips-title">Today's Tips</div>
     
-    <div id="tips-container">
-      <p class="loading-text">Loading...</p>
-    </div>
+    <div id="tips-container"></div>
 
     <div class="back-btn-container">
       <a href="index.html" class="back-btn">← Back to Home</a>
@@ -127,74 +121,6 @@
 
   </div>
 
-  <script>
-    // Show today's date
-    const today = new Date();
-
-    // Betting times (example: 8 results per day)
-    const betTimes = [
-      "10:30", "12:00", "01:30", "03:00",
-      "04:30", "06:00", "07:30", "09:00"
-    ];
-
-    // Generate daily random tips (different each day)
-    function generateDailyTips() {
-      const seed = today.toDateString(); // unique per day
-      const randomNumbers = [];
-
-      for (let i = 0; i < betTimes.length; i++) {
-        const nums = new Set();
-        while (nums.size < 4) {
-          nums.add(Math.floor(Math.random() * 10));
-        }
-        randomNumbers.push([...nums]);
-      }
-      return randomNumbers;
-    }
-
-    const tips = generateDailyTips();
-    const container = document.getElementById("tips-container");
-    container.innerHTML = ''; // Clear loading text
-
-    const tipsListContainer = document.createElement("div");
-    tipsListContainer.className = "tips-list-container";
-
-    betTimes.forEach((time, index) => {
-      const tipsListItem = document.createElement("div");
-      tipsListItem.className = "tips-list-item";
-
-      const bajiName = document.createElement("div");
-      bajiName.className = "baji-name";
-      bajiName.textContent = `${index + 1}st Baji Tips`;
-
-      const tipsNumbers = document.createElement("div");
-      tipsNumbers.className = "tips-numbers";
-
-      // calculate the show time (40 min before bet time)
-      const [hours, minutes] = time.split(":").map(Number);
-      const betDate = new Date(today);
-      betDate.setHours(hours, minutes, 0, 0);
-      const showTime = new Date(betDate.getTime() - 40 * 60000);
-
-      function updateResult() {
-        const now = new Date();
-        if (now >= showTime) {
-          tipsNumbers.textContent = tips[index].join(", ");
-        } else {
-          tipsNumbers.textContent = "—";
-        }
-      }
-
-      updateResult();
-      setInterval(updateResult, 10000); // check every 10 sec
-
-      tipsListItem.appendChild(bajiName);
-      tipsListItem.appendChild(tipsNumbers);
-      tipsListContainer.appendChild(tipsListItem);
-    });
-
-    container.appendChild(tipsListContainer);
-
-  </script>
+  <script src="tip.js"></script>
 </body>
 </html>
