@@ -1,27 +1,28 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Today's Tips | The Lucky Number</title>
-  <link rel="stylesheet" href="tip.css" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Today Tips - The Lucky Number</title>
+  <link rel="stylesheet" href="tip.css">
 </head>
 <body>
-  <header class="tip-header">
-    <div class="live-status">
-      <span class="dot"></span> LIVE
-    </div>
-    <div id="today-date"></div>
-  </header>
+  <div class="header">
+    <button class="back-btn" onclick="window.location.href='index.html'">← Back to Results</button>
+  </div>
 
-  <main class="tip-container">
-    <h2>Today's Tips</h2>
-    <div class="tips-grid" id="tipsGrid"></div>
-  </main>
+  <div class="live-section">
+    <h2>LIVE <span class="dot"></span></h2>
+    <p id="current-date"></p>
+  </div>
 
-  <footer class="tip-footer">
-    <p>&copy; 2025 The Lucky Number</p>
-  </footer>
+  <div class="lucky-title">
+    <h1>The Lucky Number</h1>
+  </div>
+
+  <div class="tips-container" id="tips-container">
+    <!-- JS will inject tips here -->
+  </div>
 
   <script src="tip.js"></script>
 </body>
