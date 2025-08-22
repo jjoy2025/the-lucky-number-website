@@ -1,178 +1,91 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Today Tips - The Lucky Number</title>
+// Function to format date as D-M-YYYY
+function formatDate(date) {
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0'); // Months are 0-based
+    const year = date.getFullYear();
+    return `${day}-${month}-${year}`;
+}
 
-  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3081004120797990" crossorigin="anonymous"></script>
+// Display the current date
+const dateDisplayElement = document.getElementById("current-date-display");
+let today = new Date();
+dateDisplayElement.textContent = formatDate(today);
 
-  <link rel="stylesheet" href="tip.css">
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background-color: #1a1a1a;
-      color: #fff;
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
+// Betting times (example from index.html)
+const betTimes = [
+    "11:00", "12:30", "14:00", "15:30",
+    "17:00", "18:30", "20:00", "21:00"
+];
+
+let dailyTips = null;
+
+function generateDailyTips() {
+    const seed = today.toDateString();
+    const randomNumbers = [];
+
+    for (let i = 0; i < betTimes.length; i++) {
+        const nums = new Set();
+        while (nums.size < 4) {
+            nums.add(Math.floor(Math.random() * 10));
+        }
+        randomNumbers.push([...nums]);
     }
 
-    .header {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      padding: 15px;
-      background-color: #2a2a2a;
-      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
-      position: sticky;
-      top: 0;
-      z-index: 100;
+    dailyTips = randomNumbers;
+}
+
+function updateTipsDisplay() {
+    const now = new Date();
+    const isNewDay = now.toDateString() !== today.toDateString();
+
+    if (isNewDay) {
+        today = now;
+        dateDisplayElement.textContent = formatDate(today);
+        generateDailyTips(); // Reset tips for the new day
     }
 
-    .back-btn {
-      background-color: #f5c400;
-      color: #111;
-      border: none;
-      padding: 10px 20px;
-      font-size: 16px;
-      font-weight: bold;
-      border-radius: 5px;
-      cursor: pointer;
-      text-decoration: none;
-      transition: background-color 0.3s ease;
-    }
+    const tipsContainer = document.getElementById("tips-container");
+    // Clear the container before re-drawing
+    tipsContainer.innerHTML = '';
 
-    .back-btn:hover {
-      background-color: #e0b300;
-    }
+    const tipsListContainer = document.createElement("div");
+    tipsListContainer.className = "tips-list-container";
 
-    .live-section {
-      text-align: center;
-      padding: 15px;
-      background-color: #2a2a2a;
-      margin-top: 10px;
-      border-radius: 8px;
-    }
+    betTimes.forEach((time, index) => {
+        const [hours, minutes] = time.split(":").map(Number);
+        const betDate = new Date(today);
+        betDate.setHours(hours, minutes, 0, 0);
 
-    .live-section h2 {
-      margin: 0;
-      font-size: 1.5em;
-      color: #fff;
-    }
+        const showTipsTime = new Date(betDate.getTime() - 20 * 60000);
 
-    .live-section .dot {
-      display: inline-block;
-      width: 10px;
-      height: 10px;
-      background-color: #00ff00;
-      border-radius: 50%;
-      margin-left: 8px;
-      animation: pulse 1.5s infinite;
-    }
+        const tipsListItem = document.createElement("div");
+        tipsListItem.className = "tips-list-item";
 
-    @keyframes pulse {
-      0% { transform: scale(1); opacity: 1; }
-      50% { transform: scale(1.2); opacity: 0.7; }
-      100% { transform: scale(1); opacity: 1; }
-    }
+        const bajiName = document.createElement("div");
+        bajiName.className = "baji-name";
+        bajiName.textContent = `${index + 1}st Baji Tips`;
 
-    #current-date {
-      font-size: 0.9em;
-      color: #ccc;
-      margin: 5px 0 0;
-    }
+        const tipsNumbers = document.createElement("div");
+        tipsNumbers.className = "tips-numbers";
 
-    .lucky-title {
-      text-align: center;
-      padding: 20px;
-    }
+        if (now >= showTipsTime) {
+            tipsNumbers.textContent = dailyTips[index].join(", ");
+        } else {
+            tipsNumbers.textContent = "Calculating...";
+            tipsNumbers.classList.add("calculating");
+        }
 
-    .lucky-title h1 {
-      margin: 0;
-      font-size: 2em;
-      color: #f5c400;
-    }
+        tipsListItem.appendChild(bajiName);
+        tipsListItem.appendChild(tipsNumbers);
+        tipsListContainer.appendChild(tipsListItem);
+    });
 
-    .tips-container {
-      padding: 20px;
-      max-width: 900px;
-      margin: 0 auto;
-    }
+    tipsContainer.appendChild(tipsListContainer);
+}
 
-    .tip-card {
-      background-color: #2a2a2a;
-      border-radius: 8px;
-      padding: 20px;
-      margin-bottom: 20px;
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
-      text-align: center;
-    }
+// Initial generation and display
+generateDailyTips();
+updateTipsDisplay();
 
-    .tip-card h3 {
-      color: #f5c400;
-      margin-top: 0;
-    }
-
-    .tip-card .numbers {
-      font-size: 2em;
-      font-weight: bold;
-      letter-spacing: 2px;
-      margin: 15px 0;
-    }
-
-    .tip-card .numbers span {
-      background-color: #3a3a3a;
-      padding: 8px 15px;
-      border-radius: 5px;
-      display: inline-block;
-      margin: 5px;
-    }
-
-    /* Media Queries for Mobile Responsiveness */
-    @media (max-width: 768px) {
-      .header {
-        padding: 10px;
-      }
-      .back-btn {
-        padding: 8px 15px;
-        font-size: 14px;
-      }
-      .lucky-title h1 {
-        font-size: 1.5em;
-      }
-      .tips-container {
-        padding: 10px;
-      }
-      .tip-card {
-        padding: 15px;
-      }
-      .tip-card .numbers {
-        font-size: 1.5em;
-      }
-      .tip-card .numbers span {
-        padding: 6px 12px;
-      }
-    }
-  </style>
-</head>
-<body>
-  <div class="header">
-    <button class="back-btn" onclick="window.location.href='index.html'">← Back to Results</button>
-  </div>
-
-  <div class="live-section">
-    <h2>LIVE <span class="dot"></span></h2>
-    <p id="current-date"></p>
-  </div>
-
-  <div class="lucky-title">
-    <h1>The Lucky Number</h1>
-  </div>
-
-  <div class="tips-container" id="tips-container">
-    </div>
-
-  <script src="tip.js"></script>
-</body>
-</html>
+// Check for updates every 10 seconds
+setInterval(updateTipsDisplay, 10000);
