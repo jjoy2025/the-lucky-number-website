@@ -1,0 +1,21 @@
+{
+  "name": "Zero to Nine Online",
+  "short_name": "Zero to Nine",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#1a1a1a",
+  "theme_color": "#f5c400",
+  "description": "Get the live results for Zero to Nine Online and The Lucky Number.",
+  "icons": [
+    {
+      "src": "/logo.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/logo.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
