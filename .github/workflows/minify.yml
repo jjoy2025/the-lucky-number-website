@@ -3,7 +3,7 @@ name: Minify Code
 on:
   push:
     branches:
-      - main  # আপনার প্রধান ব্রাঞ্চের নাম যদি 'main' না হয়ে 'master' হয়, তাহলে এখানে 'master' লিখুন।
+      - main
 
 jobs:
   minify:
@@ -15,7 +15,7 @@ jobs:
       - name: Minify CSS and JS files
         uses: nizarmah/auto-minify@v3
         with:
-          directory: '.' 
+          directory: '.'
           overwrite: true
 
       - name: Commit changes
