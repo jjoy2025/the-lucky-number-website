@@ -46,7 +46,10 @@
       margin: 20px 0;
     }
     .install-app-container #install-app-btn {
-        display: none; /* Initially hidden, will be shown by JS */
+        display: block; /* পরিবর্তন করা হয়েছে: এখন বাটনটি সবসময় দৃশ্যমান থাকবে */
+        width: 80%; /* Takes up most of the width */
+        max-width: 300px;
+        margin: 0 auto;
         padding: 15px 30px;
         background-color: #f5c400;
         color: #111;
@@ -197,7 +200,7 @@
     </section>
 
     <div class="install-app-container">
-      <button id="install-app-btn"> Install Zerotonine app</button>
+      <button id="install-app-btn">অ্যাপ ইনস্টল করুন</button>
     </div>
 
     <section class="result-schedule-container">
@@ -276,7 +279,7 @@
                 <tr><td>399</td><td>147</td><td>247</td><td>266</td><td>366</td><td>466</td><td>566</td><td>477</td><td>135</td><td>299</td></tr>
                 <tr><td>588</td><td>228</td><td>256</td><td>112</td><td>113</td><td>358</td><td>557</td><td>990</td><td>225</td><td>334</td></tr>
                 <tr><td>489</td><td>499</td><td>166</td><td>356</td><td>122</td><td>880</td><td>368</td><td>134</td><td>144</td><td>488</td></tr>
-                <tr><td>245</td><td>688</td><td>599</td><td>239</td><td>177</td><td>114</td><td>359</td><td>558</td><td>379</td><td>389</td></tr>
+                <tr><td>245</td><td>688</td><td>599</td><td>239</td><td>177</td><td>114</td><td>359</td><td>558</td><td>379</td><td>389</td></tr>                
                 <tr><td>155</td><td>778</td><td>148</td><td>338</td><td>249</td><td>556</td><td>449</td><td>369</td><td>559</td><td>226</td></tr>
                 <tr><td>227</td><td>138</td><td>788</td><td>257</td><td>339</td><td>259</td><td>269</td><td>378</td><td>289</td><td>569</td></tr>
                 <tr><td>344</td><td>156</td><td>445</td><td>220</td><td>889</td><td>349</td><td>133</td><td>440</td><td>388</td><td>677</td></tr>
@@ -348,7 +351,6 @@
     window.addEventListener('beforeinstallprompt', (e) => {
       e.preventDefault();
       deferredPrompt = e;
-      installBtn.style.display = 'block';
     });
 
     installBtn.addEventListener('click', () => {
@@ -361,7 +363,6 @@
             console.log('User dismissed the install prompt');
           }
           deferredPrompt = null;
-          installBtn.style.display = 'none';
         });
       }
     });
@@ -369,6 +370,8 @@
     // Hide the button if the app is already installed
     if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone) {
       installBtn.style.display = 'none';
+    } else {
+      installBtn.style.display = 'block'; // Make it always visible if not in standalone mode
     }
   </script>
 
