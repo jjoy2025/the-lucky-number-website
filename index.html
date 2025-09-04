@@ -17,6 +17,7 @@
   <link rel="manifest" href="/manifest.json">
 
   <style>
+    /* General styles for the main content */
     #install-button {
       display: none;
       position: fixed;
@@ -33,21 +34,19 @@
       box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
       z-index: 1000;
     }
-    /* Hide on screens larger than 768px */
     @media (min-width: 769px) {
       #install-button {
         display: none !important;
       }
     }
 
-    /* Updated Styles for Install App button */
     .install-app-container {
       text-align: center;
       margin: 20px 0;
     }
     .install-app-container #install-app-btn {
-        display: block; /* পরিবর্তন করা হয়েছে: এখন বাটনটি সবসময় দৃশ্যমান থাকবে */
-        width: 80%; /* Takes up most of the width */
+        display: block; 
+        width: 80%;
         max-width: 300px;
         margin: 0 auto;
         padding: 15px 30px;
@@ -200,7 +199,7 @@
     </section>
 
     <div class="install-app-container">
-      <button id="install-app-btn">অ্যাপ ইনস্টল করুন</button>
+      <button id="install-app-btn">Install App</button>
     </div>
 
     <section class="result-schedule-container">
@@ -351,6 +350,7 @@
     window.addEventListener('beforeinstallprompt', (e) => {
       e.preventDefault();
       deferredPrompt = e;
+      installBtn.style.display = 'block';
     });
 
     installBtn.addEventListener('click', () => {
@@ -363,6 +363,7 @@
             console.log('User dismissed the install prompt');
           }
           deferredPrompt = null;
+          installBtn.style.display = 'none';
         });
       }
     });
@@ -370,8 +371,6 @@
     // Hide the button if the app is already installed
     if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone) {
       installBtn.style.display = 'none';
-    } else {
-      installBtn.style.display = 'block'; // Make it always visible if not in standalone mode
     }
   </script>
 
