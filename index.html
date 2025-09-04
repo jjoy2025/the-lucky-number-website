@@ -40,64 +40,27 @@
       }
     }
 
-    /* */
-    /* PWA Install Dialog Styles */
-    #pwa-install-dialog {
-      display: none; /* Initially hidden */
-      position: fixed;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      background-color: #333;
-      color: #fff;
-      padding: 20px;
-      border-radius: 10px;
-      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-      z-index: 1001;
+    /* Updated Styles for Install App button */
+    .install-app-container {
       text-align: center;
-      max-width: 300px;
-      border: 1px solid #f5c400;
-      animation: fadeIn 0.5s ease-in-out;
+      margin: 20px 0;
     }
-    #pwa-install-dialog h3 {
-      margin-top: 0;
-      color: #f5c400;
+    .install-app-container #install-app-btn {
+        display: none; /* Initially hidden, will be shown by JS */
+        padding: 15px 30px;
+        background-color: #f5c400;
+        color: #111;
+        border: none;
+        border-radius: 8px;
+        font-weight: bold;
+        font-size: 1.2em;
+        cursor: pointer;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+        transition: transform 0.2s ease-in-out;
     }
-    #pwa-install-dialog p {
-      margin-bottom: 15px;
+    .install-app-container #install-app-btn:hover {
+        transform: scale(1.05);
     }
-    #pwa-install-dialog .close-btn {
-      position: absolute;
-      top: 10px;
-      right: 10px;
-      background: transparent;
-      border: none;
-      color: #fff;
-      font-size: 1.2em;
-      cursor: pointer;
-    }
-    .pwa-install-btn {
-      background-color: #007bff;
-      color: #fff;
-      border: none;
-      padding: 10px 20px;
-      border-radius: 5px;
-      cursor: pointer;
-      font-size: 1em;
-    }
-
-    /* Responsive adjustments for the dialog */
-    @media (max-width: 768px) {
-        #pwa-install-dialog {
-            width: 90%;
-        }
-    }
-    
-    @keyframes fadeIn {
-      from { opacity: 0; }
-      to { opacity: 1; }
-    }
-    /* */
   </style>
 
   <link rel="stylesheet" href="style.css" />
@@ -185,38 +148,28 @@
       font-size: 1em;
     }
 
-    /* */
-    /* Style for More Results link */
+    /* Updated Style for More Results link */
     .more-results-container {
         text-align: center;
         margin: 20px 0;
     }
     .more-results-container a {
         display: inline-block;
-        padding: 10px 20px;
+        padding: 15px 30px; /* Increased padding */
         background-color: #25D366; /* WhatsApp green */
         color: #fff;
         border-radius: 5px;
         text-decoration: none;
         font-weight: bold;
+        font-size: 1.2em; /* Increased font size */
         transition: background-color 0.3s ease;
     }
     .more-results-container a:hover {
         background-color: #128C7E;
     }
-    /* */
   </style>
 </head>
 <body>
-
-  -->
-  <div id="pwa-install-dialog" style="display:none;">
-    <button class="close-btn" onclick="closeInstallDialog()">&times;</button>
-    <h3>Install Zero to Nine App</h3>
-    <p>Install this app on your home screen for quick access!</p>
-    <button class="pwa-install-btn" onclick="installApp()">Install App</button>
-  </div>
-  -->
 
   <header class="main-header">
     <div class="header-title">
@@ -242,6 +195,10 @@
       </div>
       <div class="results-grid"></div>
     </section>
+
+    <div class="install-app-container">
+      <button id="install-app-btn">অ্যাপ ইনস্টল করুন</button>
+    </div>
 
     <section class="result-schedule-container">
       <h2>Result Time Schedule</h2>
@@ -274,11 +231,9 @@
       <div class="old-results-container"></div>
     </section>
 
-    -->
     <section class="more-results-container">
         <a href="https://whatsapp.com/channel/0029VbB5kjhDzgT2fS4SYy43" target="_blank">More Results</a>
     </section>
-    -->
 
     <section class="lucky-number-patti-list">
       <h2>Lucky Number Patti List</h2>
@@ -385,33 +340,18 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="script.js"></script>
   <script src="app.js"></script>
-  
-  -->
+
   <script>
     let deferredPrompt;
+    const installBtn = document.getElementById('install-app-btn');
+
     window.addEventListener('beforeinstallprompt', (e) => {
       e.preventDefault();
       deferredPrompt = e;
-      const installDialog = document.getElementById('pwa-install-dialog');
-      if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone) {
-          // Do nothing if the app is already installed
-      } else {
-          installDialog.style.display = 'block';
-      }
+      installBtn.style.display = 'block';
     });
 
-    document.getElementById('pwa-install-dialog').addEventListener('click', (e) => {
-        if (e.target.id === 'pwa-install-dialog') {
-            installApp();
-        }
-    });
-
-    function closeInstallDialog() {
-        const installDialog = document.getElementById('pwa-install-dialog');
-        installDialog.style.display = 'none';
-    }
-
-    function installApp() {
+    installBtn.addEventListener('click', () => {
       if (deferredPrompt) {
         deferredPrompt.prompt();
         deferredPrompt.userChoice.then((choiceResult) => {
@@ -421,16 +361,16 @@
             console.log('User dismissed the install prompt');
           }
           deferredPrompt = null;
-          closeInstallDialog();
+          installBtn.style.display = 'none';
         });
       }
-    }
-    
-    // Check if the app is running in standalone mode (installed)
-    function isStandalone() {
-        return (window.matchMedia('(display-mode: standalone)').matches) || (window.navigator.standalone);
+    });
+
+    // Hide the button if the app is already installed
+    if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone) {
+      installBtn.style.display = 'none';
     }
   </script>
-  -->
+
 </body>
 </html>
